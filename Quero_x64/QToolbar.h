@@ -42,7 +42,6 @@
 #include "IconAnimation.h"
 #include "FavIcon.h"
 #include "RedirectRequest.h"
-#include "CertificateDownloader.h"
 #ifdef COMPILE_FOR_WINDOWS_VISTA
 #include "AeroReBar.h"
 #endif
@@ -1140,8 +1139,6 @@ public:
 	// FavIcon Downloader
 	CFavIcon m_FavIcon;
 
-	// Certificate Downloader
-	CCertificateDownloader m_CertificateDownloader;
 
 	// Quero Broker
 	IQueroBroker *pQueroBroker;

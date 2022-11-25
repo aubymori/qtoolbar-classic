@@ -24,9 +24,6 @@
     <ClCompile Include="ButtonBar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CertificateDownloader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ComboEngine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -179,9 +176,6 @@
     <ClInclude Include="ButtonBar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CertificateDownloader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ComboEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -300,6 +294,66 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UIZoomFactor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlapp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlcrack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlctrls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlctrlw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlctrlx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlddx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atldlgs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atldwm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlfind.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlframe.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlgdi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlmisc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlprint.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlres.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlribbon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlscrl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlsplit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atltheme.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atluser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="atlwinx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

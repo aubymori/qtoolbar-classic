@@ -67,18 +67,18 @@ extern CComModule _Module;
 
 #define _WTL_NO_CSTRING
 
-#include <atlapp.h>
-#include <atlmisc.h>
-#include <atlctl.h>
-#include <atlframe.h>
-#include <atlddx.h>
-#include <atldlgs.h>
-#include <atlctrls.h>
-#include <atlctrlw.h>
-#include <atlctrlx.h>
-#include <atlscrl.h>
+#include "atlapp.h"
+#include "atlmisc.h"
+#include "atlctl.h"
+#include "atlframe.h"
+#include "atlddx.h"
+#include "atldlgs.h"
+#include "atlctrls.h"
+#include "atlctrlw.h"
+#include "atlctrlx.h"
+#include "atlscrl.h"
 #ifdef COMPILE_FOR_WINDOWS_VISTA
-	#include <atltheme.h>
+	#include "atltheme.h"
 #endif
 
 

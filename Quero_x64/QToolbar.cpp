@@ -70,7 +70,7 @@ HICON CQToolbar::g_Icons[NICONS]={0,0,0,0,0,0,0};
 bool CQToolbar::g_bIconsLoaded=false;
 VersionInfo CQToolbar::QueroVersion;
 
-CQToolbar::CQToolbar() : m_pBrowser(NULL) , m_pBand(NULL) , m_IconAnimation(this), m_FavIcon(this), m_CertificateDownloader(this), pQueroBroker(NULL)
+CQToolbar::CQToolbar() : m_pBrowser(NULL) , m_pBand(NULL) , m_IconAnimation(this), m_FavIcon(this), pQueroBroker(NULL)
 #ifdef COMPILE_FOR_WINDOWS_VISTA
 ,m_ReBar(this)
 #endif
@@ -745,9 +745,6 @@ CQToolbar::~CQToolbar()
 
 	// Ensure that all FavIcon download threads are stopped
 	m_FavIcon.AbortThreads();
-
-	// Ensure that all Certificate download threads are stopped
-	m_CertificateDownloader.AbortThreads();
 
 	if(WaitForSingleObject(g_hQSharedDataMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
 	{
@@ -2583,19 +2580,6 @@ void CQToolbar::UpdateQueroInstance(UINT update)
 		UpdateEmbedButtons(false,true);
 	}
 
-	if(update&UPDATE_DISPLAY_CERTIFICATE_INFORMATION)
-	{
-		if(g_Options2&OPTION2_DisplayCertificateInformation)
-		{
-			if(IsSecureConnection()) m_CertificateDownloader.Download(currentAsciiURL,HostStartIndexAscii,HostEndIndexAscii);
-		}
-		else
-		{
-			Certificate_Organization_Extent=0;
-			UpdateEmbedButtons(true,true);
-		}
-	}
-
 	if(update&UPDATE_QUERO_CONTEXT_MENU)
 	{
 		m_pBand->InstallContextMenu((g_Options2&OPTION2_EnableQueroContextMenu)!=0);
@@ -3850,22 +3834,6 @@ void CQToolbar::DrawItemComboQuero(HDC hDC,DRAWITEMSTRUCT *pItem)
 		// Draw state icon
 
 		DrawItemIcon(hDC,&rect,PreviewIDN?g_Icons[ICON_URL]:currentIcon,hDefaultBackground,currentIconOffset,IsLoadingAnimation());
-
-		// Draw security certificate information
-
-		if(SecureLockIcon_Quero && Certificate_Organization_Extent)
-		{
-			rect.left+=QEDITCTRL_LEFTMARGIN+m_ComboQuero.GetEditCtrlMargin(); // Add left margin of edit control
-			rect.right=rect.left+Certificate_Organization_Extent;
-			rect.top+=Padding_Top;
-			rect.bottom--;
-
-			SelectObject(hDC,hFont);
-			SetTextColor(hDC,Colors[COLOR_Link]);
-			StrCchLen(m_CertificateDownloader.Certificate_Organization,MAX_CERT_NAME_LENGTH,len);
-			FillRect(hDC,&rect,hHighlightBrush);
-			DrawText(hDC,m_CertificateDownloader.Certificate_Organization,(int)len,&rect,DT_TOP|DT_SINGLELINE|DT_NOPREFIX|DT_END_ELLIPSIS);
-		}
 
 		// Draw inbox icons
 
@@ -6114,11 +6082,6 @@ void CQToolbar::OnNavigateBrowser(TCHAR *newurl,bool first)
 			bUpdateEmbedButtons=true;
 			bForceResizeEditCtrl=true;		
 			Certificate_Organization_Extent=0;
-		}
-		// Download SSL certificate if https scheme
-		if(!StrCmpN(currentAsciiURL,L"https://",8))
-		{
-			m_CertificateDownloader.Download(currentAsciiURL,HostStartIndexAscii,HostEndIndexAscii);
 		}
 
 		// Download new Favicon.ico from root
@@ -9939,19 +9902,6 @@ LRESULT CQToolbar::OnQueroToolbarCommand(UINT uMsg, WPARAM wParam, LPARAM lParam
 		}
 		else SetBlockAds(g_BlockAds|ADBLOCKER_Enable);
 		break;
-
-	case QUERO_COMMAND_CERTIFICATE_DOWNLOAD_COMPLETE:
-		size_t cchOrg;
-
-		if(g_Options2&OPTION2_DisplayCertificateInformation)
-		{
-			StrCchLen(m_CertificateDownloader.Certificate_Organization,MAX_CERT_NAME_LENGTH,cchOrg);
-			Certificate_Organization_Extent=MeasureTextExtent(m_CertificateDownloader.Certificate_Organization,(UINT)cchOrg);
-			if(Certificate_Organization_Extent>MAX_CERTIFICATE_ORGANIZATION_EXTENT) Certificate_Organization_Extent=MAX_CERTIFICATE_ORGANIZATION_EXTENT;
-			UpdateEmbedButtons(true,true);
-		}
-		break;
-
 	case QUERO_COMMAND_SETHIDEFLASHADS:
 		SetHideFlashAds((lParam&OPTION2_HideFlashAds)!=0);
 		break;

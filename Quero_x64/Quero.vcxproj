@@ -36,6 +36,7 @@
     <UseOfMfc>false</UseOfMfc>
     <UseOfAtl>Static</UseOfAtl>
     <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -96,24 +97,19 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|Win32'">
     <CustomBuildStep>
-      <Message>Performing registration</Message>
-      <Command>if "%25OS%25"=="" goto NOTNT
-if not "%25OS%25"=="Windows_NT" goto NOTNT
-regsvr32 /s /c "$(TargetPath)"
-echo regsvr32 exec. time &gt; "$(OutDir)regsvr32.trg"
-goto end
-:NOTNT
-echo Warning : Cannot register Unicode DLL on Windows 95
-:end
-</Command>
-      <Outputs>$(OutDir)regsvr32.trg;%(Outputs)</Outputs>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
+      <Outputs>
+      </Outputs>
     </CustomBuildStep>
     <Midl>
       <TypeLibraryName>.\ReleaseUMinDependency/Quero.tlb</TypeLibraryName>
       <HeaderFileName />
     </Midl>
     <ClCompile>
-      <Optimization>MinSpace</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <PreprocessorDefinitions>NDEBUG;_WIN32;_WINDOWS;_USRDLL;ISOLATION_AWARE_ENABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
@@ -128,13 +124,13 @@ echo Warning : Cannot register Unicode DLL on Windows 95
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat />
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0c07</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalOptions>/MAPINFO:LINES /MAPINFO:EXPORTS  %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>comctl32.lib;winmm.lib;wininet.lib;Usp10.lib;shlwapi.lib;dwmapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>.\ReleaseUMinDependency/Quero.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -145,6 +141,8 @@ echo Warning : Cannot register Unicode DLL on Windows 95
       <SubSystem>Windows</SubSystem>
       <ImportLibrary>.\ReleaseUMinDependency/Quero.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
+      <MapExports>true</MapExports>
+      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -325,7 +323,6 @@ echo Warning : Cannot register Unicode DLL on Windows 95
     <ClCompile Include="AeroReBar.cpp" />
     <ClCompile Include="AutoComplete.cpp" />
     <ClCompile Include="ButtonBar.cpp" />
-    <ClCompile Include="CertificateDownloader.cpp" />
     <ClCompile Include="ComboEngine.cpp" />
     <ClCompile Include="ComboQuero.cpp" />
     <ClCompile Include="ContentFilter.cpp" />
@@ -407,9 +404,28 @@ echo Warning : Cannot register Unicode DLL on Windows 95
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AeroReBar.h" />
+    <ClInclude Include="atlapp.h" />
+    <ClInclude Include="atlcrack.h" />
+    <ClInclude Include="atlctrls.h" />
+    <ClInclude Include="atlctrlw.h" />
+    <ClInclude Include="atlctrlx.h" />
+    <ClInclude Include="atlddx.h" />
+    <ClInclude Include="atldlgs.h" />
+    <ClInclude Include="atldwm.h" />
+    <ClInclude Include="atlfind.h" />
+    <ClInclude Include="atlframe.h" />
+    <ClInclude Include="atlgdi.h" />
+    <ClInclude Include="atlmisc.h" />
+    <ClInclude Include="atlprint.h" />
+    <ClInclude Include="atlres.h" />
+    <ClInclude Include="atlribbon.h" />
+    <ClInclude Include="atlscrl.h" />
+    <ClInclude Include="atlsplit.h" />
+    <ClInclude Include="atltheme.h" />
+    <ClInclude Include="atluser.h" />
+    <ClInclude Include="atlwinx.h" />
     <ClInclude Include="AutoComplete.h" />
     <ClInclude Include="ButtonBar.h" />
-    <ClInclude Include="CertificateDownloader.h" />
     <ClInclude Include="ComboEngine.h" />
     <ClInclude Include="ComboQuero.h" />
     <ClInclude Include="ContentFilter.h" />
