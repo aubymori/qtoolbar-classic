@@ -327,15 +327,6 @@ HICON CProfiles::GetEngineIcon(SearchEngine *pEngine,HICON hDefaultIcon)
 			pEngine->hIcon=(HICON)LoadImage(_Module.m_hInst,pEngine->IconFile,IMAGE_ICON,g_Scaled_IconSize,g_Scaled_IconSize,LR_DEFAULTCOLOR|LR_LOADFROMFILE);
 			hIcon=pEngine->hIcon;
 		}
-		else if(g_Options&OPTION_DownloadFavIcon) // Try loading favicon.ico from cache
-		{
-			if(pEngine->IconCacheRetryTimer==0)
-			{
-				pEngine->hIcon=CFavIcon::LoadFavIconFromCache(pEngine->LinkURL,true);
-				hIcon=pEngine->hIcon;
-			}
-			else pEngine->IconCacheRetryTimer--;
-		}
 	} // End pEngine!=NULL
 
 	if(hIcon==NULL) hIcon=hDefaultIcon;

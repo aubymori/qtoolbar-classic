@@ -40,7 +40,6 @@
 #include "Profiles.h"
 #include "IDNA.h"
 #include "IconAnimation.h"
-#include "FavIcon.h"
 #include "RedirectRequest.h"
 #ifdef COMPILE_FOR_WINDOWS_VISTA
 #include "AeroReBar.h"
@@ -898,7 +897,7 @@ public:
 	void SetSearchIcon(int IconId);
 	inline HICON GetFavIcon() {return currentFavIcon;}
 	inline void SetFavIcon(HICON hIcon) {if(currentFavIcon) DestroyIcon(currentFavIcon);currentFavIcon=hIcon;}
-	inline TCHAR* GetFavIconURL() { return (currentFavIcon)?m_FavIcon.GetFavIconURL():NULL; }
+	inline TCHAR* GetFavIconURL() { return NULL; }
 	void SetIcon_IEFrame(HICON hIcon);
 
 	// Colors
@@ -1135,10 +1134,6 @@ public:
 
 	// Query Toolbar menu
 	HMENU hPopupMenu;
-
-	// FavIcon Downloader
-	CFavIcon m_FavIcon;
-
 
 	// Quero Broker
 	IQueroBroker *pQueroBroker;

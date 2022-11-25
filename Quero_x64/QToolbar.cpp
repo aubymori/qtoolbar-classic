@@ -38,7 +38,6 @@
 #include "UIZoomFactor.h"
 #include "UIResizeWindow.h"
 #include "QueroBand.h"
-#include "ContentFilter.h"
 
 #include <shlwapi.h>
 #include <urlhist.h>
@@ -56,8 +55,6 @@
 
 #include "..\QueroBroker\QueroBroker_i.c"
 
-extern CContentFilter g_ContentFilter;
-
 const int g_NavOpenMap[4]={0,navOpenInNewWindow,navOpenInNewTab,navOpenBackgroundTab};
 
 #define MapNewWinTabToNavOpen(newWinTab) g_NavOpenMap[newWinTab]
@@ -70,7 +67,7 @@ HICON CQToolbar::g_Icons[NICONS]={0,0,0,0,0,0,0};
 bool CQToolbar::g_bIconsLoaded=false;
 VersionInfo CQToolbar::QueroVersion;
 
-CQToolbar::CQToolbar() : m_pBrowser(NULL) , m_pBand(NULL) , m_IconAnimation(this), m_FavIcon(this), pQueroBroker(NULL)
+CQToolbar::CQToolbar() : m_pBrowser(NULL) , m_pBand(NULL) , m_IconAnimation(this), pQueroBroker(NULL)
 #ifdef COMPILE_FOR_WINDOWS_VISTA
 ,m_ReBar(this)
 #endif
@@ -301,7 +298,6 @@ CQToolbar::CQToolbar() : m_pBrowser(NULL) , m_pBand(NULL) , m_IconAnimation(this
 		SyncSettings();
 
 		// Set visible buttons
-		m_LogoToolbar.SetVisibleButtons(g_Buttons);
 		m_ButtonBar.SetVisibleButtons(g_Buttons);
 
 		ReleaseMutex(hQSharedDataMutex);
@@ -332,7 +328,6 @@ CQToolbar::CQToolbar() : m_pBrowser(NULL) , m_pBand(NULL) , m_IconAnimation(this
 	m_ComboQuero.SetToolbar(this);
 	m_ComboEngine.SetToolbar(this);
 	m_ButtonBar.SetToolbar(this);
-	m_LogoToolbar.SetToolbar(this);
 }
 
 HKEY CQToolbar::OpenQueroKey(HKEY hKeyRoot,TCHAR *pSubKey,bool bCreateKey)
@@ -741,9 +736,6 @@ CQToolbar::~CQToolbar()
 	// Ensure that search animations are stopped
 	m_IconAnimation.AbortThread();
 
-	// Ensure that all FavIcon download threads are stopped
-	m_FavIcon.AbortThreads();
-
 	if(WaitForSingleObject(g_hQSharedDataMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
 	{
 		// Remove Quero instance pointers from global array
@@ -770,9 +762,6 @@ CQToolbar::~CQToolbar()
 		// Decreae Quero instance count
 		if(g_QueroInstanceCount) g_QueroInstanceCount--;
 
-		// Free FilterStates associated with the terminated instance
-		g_ContentFilter.FreeFilterStates(this);
-
 		// Last instance closed?
 		if(g_QueroInstanceCount==0)
 		{
@@ -796,7 +785,6 @@ CQToolbar::~CQToolbar()
 			}
 
 			// Free ToolbarIcons
-			m_LogoToolbar.m_ToolbarIcons.Destroy();
 			m_ButtonBar.m_ToolbarIcons.Destroy();
 
 			// Set Icons loaded to false
@@ -806,8 +794,6 @@ CQToolbar::~CQToolbar()
 			if(g_QueroTheme_FileName) SysFreeString(g_QueroTheme_FileName);
 			if(g_QueroTheme_DLL) FreeLibrary(g_QueroTheme_DLL);
 
-			// Free FilterStates
-			g_ContentFilter.FreeFilterStates(NULL);
 			
 			// Free global History and Whitelist
 			FreeHistory(g_History,&g_HistoryIndex);
@@ -1036,7 +1022,6 @@ void CQToolbar::CreateDeferred()
 			}
 
 			m_ButtonBar.LoadToolbarIcons();
-			m_LogoToolbar.LoadToolbarIcons();
 
 			g_bIconsLoaded=true;
 		}
@@ -1053,7 +1038,6 @@ void CQToolbar::CreateDeferred()
 		m_ButtonBar.Create(m_hWnd, rect, NULL, DEFAULT_TOOLBAR_STYLE);
 
 		// Create the Logo Toolbar
-		m_LogoToolbar.Create(m_hWnd, rect, NULL, DEFAULT_TOOLBAR_STYLE);
 		
 		// Subclass combo box drop-down windows
 		m_ComboQuero.SubclassListWnd();
@@ -1172,7 +1156,7 @@ int CQToolbar::GetToolbarHeight()
 	int height;
 
 	if((g_Options2&OPTION2_ShowSearchBox) || (g_Options&OPTION_ShowSearchEngineComboBox) ||
-		m_LogoToolbar.HasVisibleButtons() || m_ButtonBar.HasVisibleButtons())	
+	 m_ButtonBar.HasVisibleButtons())	
 		height=ItemHeight+6+GetToolbarPadding()*2;
 	else
 		height=0;
@@ -1277,7 +1261,7 @@ LRESULT CQToolbar::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandle
 	LONG delta;
 
 	// Update Toolbar Background Bitmap
-	InterlockedIncrement(&g_ToolbarBackgroundState);
+	//InterlockedIncrement(&g_ToolbarBackgroundState);
 
 	// Get the size of the toolbar
 	GetClientRect(&wndRect);
@@ -1294,7 +1278,7 @@ LRESULT CQToolbar::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandle
 		}
 		else
 		{
-			wndRect.right=wndRect.left+m_LogoToolbar.GetSize().cx;
+			wndRect.right=wndRect.left;
 
 			if(g_Options&OPTION_ShowSearchEngineComboBox)
 			{
@@ -1313,7 +1297,7 @@ LRESULT CQToolbar::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandle
 		wndRect.bottom+=100;
 
 		// Calculate the dimensions of the Quero combo box
-		wndRect.left+=m_LogoToolbar.GetSize().cx+1;
+		wndRect.left+=1;
 		if((g_Options2&OPTION2_ShowSearchBox) || (g_Options&OPTION_ShowSearchEngineComboBox)) wndRect.left+=LOGOGAP;
 		if(g_Options2&OPTION2_ShowSearchBox)
 		{	
@@ -1502,28 +1486,6 @@ LRESULT CQToolbar::OnNotify(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHand
 		result=CDRF_DODEFAULT;
 		break;
 
-	case TBN_DROPDOWN:
-		RECT rc;
-		POINT point;
-
-		SendMessage(lpnmTB->hdr.hwndFrom,TB_GETRECT,(WPARAM)lpnmTB->iItem,(LPARAM)&rc);
-		::MapWindowPoints(lpnmTB->hdr.hwndFrom,HWND_DESKTOP,(LPPOINT)&rc,2);
-
-		#ifdef COMPILE_FOR_WINDOWS_VISTA
-		m_LogoToolbar.PressButton(IDM_LOGO,TRUE);
-		#endif
-
-		point.x=rc.left;
-		point.y=rc.bottom;
-		OnQueroButtonClick(TPM_LEFTALIGN,&point,&rc);
-
-		#ifdef COMPILE_FOR_WINDOWS_VISTA
-		m_LogoToolbar.PostPressButton(IDM_LOGO,FALSE);
-		#endif
-
-		result=TBDDRET_DEFAULT;
-		break;
-
 	case TTN_NEEDTEXT:
 		BSTR bstrQuery;
 		UINT HintId;
@@ -1551,16 +1513,7 @@ LRESULT CQToolbar::OnNotify(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHand
 				SysFreeString(bstrQuery);
 			}
 			break;
-		case IDM_LOGO:
-			if(m_LogoToolbar.IsButtonPressed(IDM_LOGO)) lpdi->lpszText=NULL;
-			else
-			{
-				if(OPTION_QueroShortcutKey(g_Options)!=QKEY_AltQ)
-					HintId=IDS_HINT_QUERO_ALT_Q;
-				else
-					HintId=IDS_HINT_QUERO_ALT_SHIFT_Q;
-			}
-			break;
+		
 		case IDM_BACK:
 			lpdi->lpszText=m_NavBar.GetTravelLogTooltip(Tooltip,sizeof Tooltip,true);
 			break;
@@ -2504,8 +2457,6 @@ void CQToolbar::UpdateQueroInstance(UINT update)
 
 	if(update&UPDATE_BUTTONS)
 	{
-		m_LogoToolbar.ShowButtons(g_Buttons);
-		m_LogoToolbar.UpdatePosition();
 		m_ButtonBar.ShowButtons(g_Buttons);
 	}
 
@@ -2529,7 +2480,6 @@ void CQToolbar::UpdateQueroInstance(UINT update)
 	if(update&UPDATE_BUTTONS)
 	{
 		RedrawWindow(NULL,NULL,RDW_INVALIDATE|RDW_ERASE);
-		m_LogoToolbar.RedrawWindow(NULL,NULL,RDW_INVALIDATE|RDW_ERASE);
 		m_ButtonBar.RedrawWindow(NULL,NULL,RDW_INVALIDATE|RDW_ERASE);
 	}
 
@@ -2571,11 +2521,6 @@ void CQToolbar::UpdateQueroInstance(UINT update)
 	if(update&UPDATE_QUERO_CONTEXT_MENU)
 	{
 		m_pBand->InstallContextMenu((g_Options2&OPTION2_EnableQueroContextMenu)!=0);
-	}
-
-	if(update&UPDATE_QUERO_LOGO)
-	{
-		m_LogoToolbar.UpdateLogoImage();
 	}
 
 	#ifdef COMPILE_FOR_WINDOWS_VISTA
@@ -3421,7 +3366,6 @@ LRESULT CQToolbar::OnSysColorChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
 	}
 
 	// Update the embedded toolbars heights
-	m_LogoToolbar.OnHeightChange(ItemHeight);
 	m_ButtonBar.OnHeightChange(ItemHeight);
 
 	// Set the combobox width
@@ -3911,12 +3855,7 @@ void CQToolbar::DrawItemComboQuero(HDC hDC,DRAWITEMSTRUCT *pItem)
 				}
 				else
 				{
-					hIcon=g_Icons[ICON_URL];
-					if(g_Options&OPTION_DownloadFavIcon)
-					{
-						pHistEntry->hIcon=CFavIcon::LoadFavIconFromCache(pHistEntry->Query,true);
-						if(pHistEntry->hIcon) hIcon=pHistEntry->hIcon;
-					}
+					
 				}
 				break;
 			default:
@@ -4605,25 +4544,10 @@ void CQToolbar::SetPhraseNotFound(bool notfound,bool noredraw)
 
 void CQToolbar::SetColorScheme(int ColorSchemeId,bool bRedraw)
 {
-	COLORREF ColorScheme_Black[NCOLORS]={0,0,0xc0c0c0,0xe0e0e0,0,0x808080,PHRASENOTFOUNDCOLOR,0};
-	COLORREF ColorScheme_GreenBlue[NCOLORS]={SEARCHCOLOR,LINKCOLOR,0xafd1c0,0xd7e9e0,0x404040,0x808080,PHRASENOTFOUNDCOLOR,0};
-	COLORREF ColorScheme_Pink[NCOLORS]={0xc000b1,0xc000b1,0xb870d0,0xeedeed,0xc000b1,0xb870d0,0xc000b1,0};
-
+	COLORREF ColorScheme_Black[NCOLORS]={0,GetSysColor(COLOR_WINDOWTEXT),0xc0c0c0,0xe0e0e0,0,0x808080,PHRASENOTFOUNDCOLOR,0};
 	COLORREF *ColorScheme;
 	UINT i;
-
-	switch(ColorSchemeId)
-	{
-	case FONTCOLOR_BLACK:
-		ColorScheme=ColorScheme_Black;
-		break;
-	case FONTCOLOR_PINK:
-		ColorScheme=ColorScheme_Pink;
-		break;
-	default:
-		ColorScheme=ColorScheme_GreenBlue;
-		break;
-	}
+	ColorScheme = ColorScheme_Black;
 
 	ColorScheme[COLOR_Background]=GetSysColor(COLOR_WINDOW);
 
@@ -6088,7 +6012,6 @@ void CQToolbar::OnNavigateBrowser(TCHAR *newurl,bool first)
 				StringCchCopyN(NewFavIconURL,MAXURLLENGTH,currentAsciiURL,HostEndIndexAscii+1);
 				StringCchCopy(NewFavIconURL+HostEndIndexAscii,MAXURLLENGTH-HostEndIndexAscii,L"/favicon.ico");
 			
-				if(NewFavIconURL[0]) m_FavIcon.Download(NewFavIconURL);
 			}
 		}
 	}
@@ -9043,86 +8966,6 @@ void CQToolbar::OnDocumentComplete()
 
 	// Download favicon if one is specified in the html document and is different from the default location (/favicon.ico)
 	
-	if(g_Options&OPTION_DownloadFavIcon)
-	{
-		TCHAR NewFavIconURL[MAXURLLENGTH];
-		IHTMLDocument2 *pHtmlDocument;
-		IHTMLElementCollection *pElementCol;
-		HRESULT hr;
-		size_t len;
-
-		NewFavIconURL[0]=L'\0';
-		if(GetHtmlDocument2(&pHtmlDocument))
-		{
-			hr=GetElementCollection(CComBSTR(L"LINK"),pHtmlDocument,&pElementCol);
-			if(SUCCEEDED_OK(hr) && pElementCol)
-			{
-				long n;
-				
-				hr=pElementCol->get_length(&n);
-				if(SUCCEEDED_OK(hr))
-				{
-					long i=0;
-					VARIANT vIdx;
-
-					vIdx.vt=VT_I4;
-
-					while(i<n)
-					{
-						IDispatch* pItemDisp;
-						IHTMLLinkElement* pLinkElement;
-
-						vIdx.intVal=i;
-						hr=pElementCol->item(vIdx,vIdx,&pItemDisp);
-						if(SUCCEEDED_OK(hr) && pItemDisp)
-						{
-							hr=pItemDisp->QueryInterface(IID_IHTMLLinkElement,(LPVOID*)&pLinkElement);
-							if(SUCCEEDED_OK(hr) && pLinkElement)
-							{
-								BSTR rel=NULL;
-
-								hr=pLinkElement->get_rel(&rel);
-								if(SUCCEEDED_OK(hr) && rel)
-								{
-									if(!StrCmpI(rel,L"SHORTCUT ICON") || !StrCmpI(rel,L"ICON"))
-									{
-										BSTR href=NULL;
-
-										hr=pLinkElement->get_href(&href);
-										if(SUCCEEDED_OK(hr) && href)
-										{
-											MakeAbsoluteURL(NewFavIconURL,href,NULL);
-											SysFreeString(href);
-										}
-
-										i=n;
-									}
-									SysFreeString(rel);
-								}
-								pLinkElement->Release();
-							}
-
-							pItemDisp->Release();
-						}
-						i++;
-					} // End of collection enumeration
-				}
-				pElementCol->Release();
-			}
-			pHtmlDocument->Release();
-		}
-
-		// Check file type
-		StrCchLen(NewFavIconURL,MAXURLLENGTH,len);
-		if(len>6 && !StrCmpI(NewFavIconURL+len-4,L".ico"))
-		{
-			if(StrCmp(m_FavIcon.GetFavIconURL(),NewFavIconURL))
-			{
-				m_FavIcon.Download(NewFavIconURL);
-			}
-		}
-
-	} // End Download favicon
 }
 
 void CQToolbar::OnDownloadBegin()
@@ -9353,7 +9196,6 @@ int CQToolbar::GetToolbarMinWidth()
 	if(g_Options2&OPTION2_ShowSearchBox) MinWidth+=180;
 	else
 	{
-		MinWidth+=m_LogoToolbar.GetSize().cx;
 		if(g_Options&OPTION_ShowSearchEngineComboBox)
 		{
 			MinWidth+=LOGOGAP+IdealEngineWidth;
@@ -9737,41 +9579,6 @@ LRESULT CQToolbar::OnQueroToolbarCommand(UINT uMsg, WPARAM wParam, LPARAM lParam
 		PutStatusText(StatusText);
 		break;
 
-	case QUERO_COMMAND_SHOWQUEROMENU:
-		if(m_LogoToolbar.IsButtonPressed(IDM_LOGO)==false)
-		{
-			if(m_LogoToolbar.HasVisibleButtons())
-			{
-				SendMessage(m_LogoToolbar.m_hWnd,TB_GETRECT,IDM_LOGO,(LPARAM)&rcExclude);
-				::MapWindowPoints(m_LogoToolbar.m_hWnd,HWND_DESKTOP,(LPPOINT)&rcExclude,2);
-			}
-			else if(g_Options2&OPTION2_ShowSearchBox)
-			{
-				m_ComboQuero.GetWindowRect(&rcExclude);
-			}
-			else GetWindowRect(&rcExclude);
-
-			point.x=rcExclude.left;
-			point.y=rcExclude.bottom;
-
-			m_LogoToolbar.SetFocus();
-			if(GetFocus()==m_LogoToolbar.m_hWnd) // Workaround if IE7 address bar drop-down is opened (steals focus)
-			{
-				if(::GetFocus()!=m_LogoToolbar.m_hWnd) m_LogoToolbar.SetFocus();
-				m_LogoToolbar.PressButton(IDM_LOGO,TRUE);
-				#ifndef COMPILE_FOR_WIN9X
-				::SendMessage(m_hWnd,WM_CHANGEUISTATE ,MAKEWPARAM(UIS_CLEAR,UISF_HIDEACCEL|UISF_HIDEFOCUS),NULL); // Show access keys			
-				#endif
-				OnQueroButtonClick(TPM_LEFTALIGN,&point,&rcExclude);
-				#ifndef COMPILE_FOR_WIN9X
-				::SendMessage(m_hWnd,WM_CHANGEUISTATE ,MAKEWPARAM(UIS_SET,UISF_HIDEACCEL|UISF_HIDEFOCUS),NULL); // Hide access keys
-				#endif
-				m_LogoToolbar.PressButton(IDM_LOGO,FALSE);
-				SetFocusOnIEServerWindow();
-			}
-		}
-		break;
-
 	case QUERO_COMMAND_SETFOCUS_QEDITCTRL:
 		ShowToolbarIfHidden();
 		if(g_Options2&OPTION2_ShowSearchBox) ::SetFocus(m_ComboQuero.m_hWndEdit);
@@ -9787,46 +9594,6 @@ LRESULT CQToolbar::OnQueroToolbarCommand(UINT uMsg, WPARAM wParam, LPARAM lParam
 
 	case QUERO_COMMAND_SHOW_OPERATION_LOCKED_ERROR:
 		::MessageBox(GetActiveWindow(),GetString(IDS_ERR_OPERATION_LOCKED),L"Quero Toolbar",MB_OK|MB_ICONSTOP);
-		break;
-
-	case QUERO_COMMAND_VIEW_BLOCKED_CONTENT:
-		MSG msg;
-		int ButtonIndex;
-
-		ButtonIndex=0;
-		while(ButtonIndex<nEmbedIcons && EmbedButtons[ButtonIndex]!=EMBEDBUTTON_CONTENTBLOCKED) ButtonIndex++;
-
-		if(ButtonIndex<nEmbedIcons)
-		{
-			if(g_Options2&OPTION2_ShowSearchBox)
-			{
-				point.x=m_ComboQuero.m_rcItem.right-EMBEDICONS_MARGIN+(EMBEDICONS_SPACING/2)-ButtonIndex*EMBEDICONS_SLOTWIDTH;
-				point.y=m_ComboQuero.m_rcItem.bottom+2;
-
-				m_ComboQuero.ClientToScreen(&point);
-
-				m_ComboQuero.GetClientRect(&rcExclude);
-				rcExclude.bottom-=2;
-				m_ComboQuero.ClientToScreen(&rcExclude);
-			}
-			else
-			{
-				if(m_LogoToolbar.HasVisibleButtons())
-				{
-					SendMessage(m_LogoToolbar.m_hWnd,TB_GETRECT,IDM_LOGO,(LPARAM)&rcExclude);
-					::MapWindowPoints(m_LogoToolbar.m_hWnd,HWND_DESKTOP,(LPPOINT)&rcExclude,2);
-				}
-				else GetWindowRect(&rcExclude);
-			
-				point.x=rcExclude.left;
-				point.y=rcExclude.bottom;
-			}
-
-			OnContentBlockedButtonClick(&point,&rcExclude);
-
-			// Remove mouse messages to avoid reopening the menu if the user clicked on the button to close the menu
-			PeekMessage(&msg,m_ComboQuero.m_hWnd,WM_MOUSEFIRST,WM_MOUSELAST,PM_REMOVE);
-		}
 		break;
 
 	case QUERO_COMMAND_SETFOCUS_COMBOENGINE:
@@ -9923,7 +9690,6 @@ void CQToolbar::ShowToolbarIfHidden()
 			{
 				BOOL b;
 
-				m_LogoToolbar.UpdatePosition();
 				m_ButtonBar.ShowButtons(0);
 				OnSysColorChange(WM_SYSCOLORCHANGE,0,0,b);
 				m_pBrowser->put_ToolBar(TRUE);

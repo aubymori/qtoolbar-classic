@@ -27,7 +27,6 @@
 #include "Quero.h"
 #include "QueroBand.h"
 #include "LogoToolbar.h"
-#include "ContentFilter.h"
 
 // Window Vista specific
 
@@ -58,6 +57,8 @@ bool g_EnableCtxMenuGo;
 bool g_AdBlockerInstalled=false;
 bool g_PopUpBlockerInstalled=false;
 
+const WCHAR TITLE_CStockBar[] = L"Address";
+
 #ifndef COMPILE_FOR_WINDOWS_VISTA
 HICON g_IE_Icon=NULL; // Default IE frame window icon
 #endif
@@ -84,7 +85,7 @@ bool g_IgnoreAltKeyUpOnce=false; // Prevents that the menu bar appears if the us
 DWORD g_BlockPopUps=DEFAULT_POPUPBLOCKEROPTIONS;
 DWORD g_BlockAds=DEFAULT_ADBLOCKEROPTIONS;
 int g_FontSize=FONTSIZE_STANDARD;
-int g_FontColor=FONTCOLOR_GREENBLUE;
+int g_FontColor = FONTCOLOR_BLACK; //GetStockObject(COLOR_WINDOWTEXT);
 UINT g_Options=DEFAULT_OPTIONS;
 UINT g_Options2=DEFAULT_OPTIONS2;
 UINT g_Buttons=DEFAULT_BUTTONS;
@@ -125,9 +126,6 @@ QSharedMemory* g_QSharedMemory=NULL;
 HANDLE g_hQSharedMemoryMutex=NULL;
 HANDLE g_hQSharedMemoryFileMapping=NULL;
 HANDLE g_hQSharedListMutex=NULL;
-
-// Content Filter
-CContentFilter g_ContentFilter;
 
 // The original showModelessDialog method
 FP_HTMLWINDOW3SHOWMODELESS ORIG_HTMLWINDOW3SHOWMODELESS=NULL;
@@ -225,16 +223,21 @@ STDMETHODIMP CQueroBand::GetBandInfo(DWORD dwBandID, DWORD dwViewMode, DESKBANDI
 		{
 			pdbi->ptActual.x = toolbarminwidth;
 			if(g_Options2&OPTION2_ShowSearchBox) pdbi->ptActual.x<<=1;
-			pdbi->ptActual.y = toolbarheight;
+			pdbi->ptActual.y = 22;
 		}
 		if(pdbi->dwMask & DBIM_TITLE)
 		{
-			pdbi->wszTitle[0]=0; // No title
+			wcscpy(pdbi->wszTitle, TITLE_CStockBar);
 		}
 		/*if(pdbi->dwMask & DBIM_BKCOLOR)
 		{
 			pdbi->crBkgnd=0;
 		}*/
+		if (pdbi->dwMask & DBIM_BKCOLOR)
+		{
+			//Use the default background color by removing this flag.
+			pdbi->dwMask &= ~DBIM_BKCOLOR;
+		}
 		if(pdbi->dwMask & DBIM_MODEFLAGS)
 		{
 			pdbi->dwModeFlags = DBIMF_NORMAL;
@@ -1166,12 +1169,7 @@ HRESULT STDMETHODCALLTYPE HTMLDocument2write(IHTMLDocument2 __RPC_FAR* pHtmlDocu
 	HRESULT hr;
 
 	//QD(L"HTMLDocument2write");
-
-	if(CContentFilter::FilterDocumentWrite(pHtmlDocument,psarray,false))
-	{
-		hr=ORIG_HTMLDOCUMENT2WRITE(pHtmlDocument,psarray);
-	}
-	else hr=S_OK;
+	hr=S_OK;
 		
 	return hr;
 
@@ -1202,12 +1200,7 @@ HRESULT STDMETHODCALLTYPE HTMLDocument2writeln(IHTMLDocument2 __RPC_FAR* pHtmlDo
 	HRESULT hr;
 
 	//QD(L"HTMLDocument2writeln");
-
-	if(CContentFilter::FilterDocumentWrite(pHtmlDocument,psarray,true))
-	{
-		hr=ORIG_HTMLDOCUMENT2WRITELN(pHtmlDocument,psarray);
-	}
-	else hr=S_OK;
+	hr=S_OK;
 		
 	return hr;
 
@@ -1236,14 +1229,7 @@ HRESULT STDMETHODCALLTYPE HTMLDocument2writeln(IHTMLDocument2 __RPC_FAR* pHtmlDo
 HRESULT STDMETHODCALLTYPE HTMLDocument2createElement(IHTMLDocument2 __RPC_FAR* pHtmlDocument,BSTR eTag,IHTMLElement **newElem)
 {
 	//QD(L"HTMLDocument2createElement");
-
-	if(eTag && *eTag)
-	{
-		QDEBUG_PRINT(L"createElement",eTag);
-		CContentFilter::FilterTag(pHtmlDocument,eTag,true);
-	}
-	return ORIG_HTMLDOCUMENT2CREATEELEMENT(pHtmlDocument,eTag,newElem);
-
+	return S_OK;
 	/* WIN32
 		// Check object type to ensure that IHtmlDocument2::createElement is invoked
 
@@ -1277,12 +1263,7 @@ HRESULT STDMETHODCALLTYPE HTMLElement_put_innerHTML(IHTMLElement __RPC_FAR* pHtm
 	bool bPassInput;
 
 	//QD(L"HTMLElement_put_innerHTML");
-
-	if(v)
-	{
-		bPassInput=CContentFilter::FilterTag(pHtmlElement,v,false);
-	}
-	else bPassInput=true;
+	bPassInput=true;
 
 	if(bPassInput) hr=ORIG_HTMLELEMENT_PUT_INNERHTML(pHtmlElement,v);
 	else hr=S_OK;
@@ -1324,12 +1305,7 @@ HRESULT STDMETHODCALLTYPE HTMLElement_put_outerHTML(IHTMLElement __RPC_FAR* pHtm
 	bool bPassInput;
 
 	//QD(L"HTMLElement_put_outerHTML");
-
-	if(v)
-	{
-		bPassInput=CContentFilter::FilterTag(pHtmlElement,v,false);
-	}
-	else bPassInput=true;
+	bPassInput=true;
 
 	if(bPassInput) hr=ORIG_HTMLELEMENT_PUT_OUTERHTML(pHtmlElement,v);
 	else hr=S_OK;
@@ -1367,13 +1343,7 @@ HRESULT STDMETHODCALLTYPE HTMLElement_insertAdjacentHTML(IHTMLElement __RPC_FAR*
 	bool bPassInput;
 
 	//QD(L"HTMLElement_insertAdjacentHTML");
-
-	if(html)
-	{
-		QDEBUG_PRINT(L"insertAdjacentHTML",html);
-		bPassInput=CContentFilter::FilterTag(pHtmlElement,html,false);
-	}
-	else bPassInput=true;
+	 bPassInput=true;
 
 	if(bPassInput) hr=ORIG_HTMLELEMENT_INSERTADJACENTHTML(pHtmlElement,where,html);
 	else hr=S_OK;
@@ -1525,8 +1495,6 @@ bool CQueroBand::InstallAdBlocker(bool install)
 									if(*(pPutInnerHtml+4)==(ULONG_PTR)HTMLElement_put_outerHTML) *(pPutInnerHtml+4)=(ULONG_PTR)ORIG_HTMLELEMENT_PUT_OUTERHTML;
 									if(*(pPutInnerHtml+8)==(ULONG_PTR)HTMLElement_insertAdjacentHTML) *(pPutInnerHtml+8)=(ULONG_PTR)ORIG_HTMLELEMENT_INSERTADJACENTHTML;
 
-									// Reset FilterStates
-									g_ContentFilter.FreeFilterStates(NULL);
 								}
 
 								g_AdBlockerInstalled=install;

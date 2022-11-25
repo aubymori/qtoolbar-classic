@@ -314,18 +314,6 @@ void CNavBar::ShowTravelLog(bool bRelativeBack)
 				AppendMenu(hTravelLogMenu,MF_ENABLED|MF_STRING,i+1,pTitle);
 
 #ifdef COMPILE_FOR_WINDOWS_VISTA
-				// Add favicon if available
-				hr=pTravelLogEntries[i]->GetURL(&pURL);
-				if(SUCCEEDED_OK(hr) && pURL)
-				{
-					hIcon=CFavIcon::LoadFavIconFromCache(pURL,true);
-					if(hIcon)
-					{
-						MenuIcons[i].AddIconToMenuItem(hIcon,NULL,hTravelLogMenu,i+1,MF_BYCOMMAND);
-						DestroyIcon(hIcon);
-					}
-					CoTaskMemFree(pURL);
-				}
 #endif
 				CoTaskMemFree(pTitle);
 			}

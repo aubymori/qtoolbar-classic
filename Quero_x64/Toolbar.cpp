@@ -68,7 +68,6 @@ LRESULT CToolbar::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandl
 		Buttons[i].idCommand = CommandIds[i];
 		Buttons[i].fsState = (VisibleButtons&ButtonIds[i])?TBSTATE_ENABLED:TBSTATE_ENABLED|TBSTATE_HIDDEN;
 		Buttons[i].fsStyle = ButtonStyles[i];
-		Buttons[i].iBitmap = i;
 	}
 	
 	::SendMessage(m_hWnd, TB_ADDBUTTONS, ButtonCount, (LPARAM)&Buttons);

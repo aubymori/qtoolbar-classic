@@ -30,15 +30,6 @@
     <ClCompile Include="ComboQuero.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ContentFilter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Downloader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FavIcon.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="IconAnimation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -180,15 +171,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ComboQuero.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ContentFilter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Downloader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FavIcon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IconAnimation.h">
