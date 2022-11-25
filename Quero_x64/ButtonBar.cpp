@@ -50,16 +50,11 @@ void CButtonBar::LoadToolbarIcons()
 {
 	WORD Icon=IDI_BUTTON_GO,IconHot=IDI_BUTTON_GO_HOT;
 
-	m_ToolbarIcons.Create(g_Scaled_ButtonSize,g_Scaled_ButtonSize,ILC_COLOR32|ILC_MASK,1,CREATE_TB_IMAGELIST|CREATE_TB_HOTIMAGELIST);
-	m_ToolbarIcons.LoadIcons(TB_IMAGELIST,&Icon,1);
-	m_ToolbarIcons.LoadIcons(TB_HOTIMAGELIST,&IconHot,1);
 }
 
 void CButtonBar::SetImageLists()
 {
-	m_ToolbarIcons.SetImageList(m_hWnd,TB_SETIMAGELIST,TB_IMAGELIST);
-	m_ToolbarIcons.SetImageList(m_hWnd,TB_SETHOTIMAGELIST,TB_HOTIMAGELIST);
-	if(IsWindowsVistaOrLater()) m_ToolbarIcons.SetImageList(m_hWnd,TB_SETPRESSEDIMAGELIST,TB_HOTIMAGELIST);
+	
 }
 
 void CButtonBar::UpdatePosition()

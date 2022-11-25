@@ -301,7 +301,6 @@ CQToolbar::CQToolbar() : m_pBrowser(NULL) , m_pBand(NULL) , m_IconAnimation(this
 		SyncSettings();
 
 		// Set visible buttons
-		m_NavBar.SetVisibleButtons(g_Buttons);
 		m_LogoToolbar.SetVisibleButtons(g_Buttons);
 		m_ButtonBar.SetVisibleButtons(g_Buttons);
 
@@ -332,7 +331,6 @@ CQToolbar::CQToolbar() : m_pBrowser(NULL) , m_pBand(NULL) , m_IconAnimation(this
 	// Set toolbar pointers
 	m_ComboQuero.SetToolbar(this);
 	m_ComboEngine.SetToolbar(this);
-	m_NavBar.SetToolbar(this);
 	m_ButtonBar.SetToolbar(this);
 	m_LogoToolbar.SetToolbar(this);
 }
@@ -798,7 +796,6 @@ CQToolbar::~CQToolbar()
 			}
 
 			// Free ToolbarIcons
-			m_NavBar.m_ToolbarIcons.Destroy();
 			m_LogoToolbar.m_ToolbarIcons.Destroy();
 			m_ButtonBar.m_ToolbarIcons.Destroy();
 
@@ -1038,7 +1035,6 @@ void CQToolbar::CreateDeferred()
 				i++;
 			}
 
-			m_NavBar.LoadToolbarIcons();
 			m_ButtonBar.LoadToolbarIcons();
 			m_LogoToolbar.LoadToolbarIcons();
 
@@ -1052,7 +1048,6 @@ void CQToolbar::CreateDeferred()
 			/*Common Control styles:*/ CCS_TOP | CCS_NODIVIDER | CCS_NOPARENTALIGN | CCS_NORESIZE ;
 
 		// Create the Navigation Bar
-		m_NavBar.Create(m_hWnd, rect, NULL, DEFAULT_TOOLBAR_STYLE);
 
 		// Create the Button Bar
 		m_ButtonBar.Create(m_hWnd, rect, NULL, DEFAULT_TOOLBAR_STYLE);
@@ -1176,7 +1171,7 @@ int CQToolbar::GetToolbarHeight()
 {
 	int height;
 
-	if((g_Options2&OPTION2_ShowSearchBox) || (g_Options&OPTION_ShowSearchEngineComboBox) || m_NavBar.HasVisibleButtons() ||
+	if((g_Options2&OPTION2_ShowSearchBox) || (g_Options&OPTION_ShowSearchEngineComboBox) ||
 		m_LogoToolbar.HasVisibleButtons() || m_ButtonBar.HasVisibleButtons())	
 		height=ItemHeight+6+GetToolbarPadding()*2;
 	else
@@ -1196,7 +1191,7 @@ int CQToolbar::GetToolbarPadding()
 
 	int buttonheight=0;
 
-	if(m_NavBar.HasVisibleButtons()) buttonheight=g_Scaled_NavButtonSize;
+	buttonheight=g_Scaled_NavButtonSize;
 	if(m_ButtonBar.HasVisibleButtons() && g_Scaled_ButtonSize>buttonheight) buttonheight=g_Scaled_ButtonSize;
 
 	if(buttonheight>20)
@@ -1300,7 +1295,7 @@ LRESULT CQToolbar::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandle
 		}
 		else
 		{
-			wndRect.right=wndRect.left+m_NavBar.GetSize().cx+m_LogoToolbar.GetSize().cx;
+			wndRect.right=wndRect.left+m_LogoToolbar.GetSize().cx;
 
 			if(g_Options&OPTION_ShowSearchEngineComboBox)
 			{
@@ -1323,7 +1318,7 @@ LRESULT CQToolbar::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandle
 		wndRect.bottom+=100;
 
 		// Calculate the dimensions of the Quero combo box
-		wndRect.left+=m_NavBar.GetSize().cx+m_LogoToolbar.GetSize().cx;
+		wndRect.left+=m_LogoToolbar.GetSize().cx;
 		if((g_Options2&OPTION2_ShowSearchBox) || (g_Options&OPTION_ShowSearchEngineComboBox)) wndRect.left+=LOGOGAP;
 		if(g_Options2&OPTION2_ShowSearchBox)
 		{	
@@ -2514,7 +2509,6 @@ void CQToolbar::UpdateQueroInstance(UINT update)
 
 	if(update&UPDATE_BUTTONS)
 	{
-		m_NavBar.ShowButtons(g_Buttons);
 		m_LogoToolbar.ShowButtons(g_Buttons);
 		m_LogoToolbar.UpdatePosition();
 		m_ButtonBar.ShowButtons(g_Buttons);
@@ -2540,7 +2534,6 @@ void CQToolbar::UpdateQueroInstance(UINT update)
 	if(update&UPDATE_BUTTONS)
 	{
 		RedrawWindow(NULL,NULL,RDW_INVALIDATE|RDW_ERASE);
-		m_NavBar.RedrawWindow(NULL,NULL,RDW_INVALIDATE|RDW_ERASE);
 		m_LogoToolbar.RedrawWindow(NULL,NULL,RDW_INVALIDATE|RDW_ERASE);
 		m_ButtonBar.RedrawWindow(NULL,NULL,RDW_INVALIDATE|RDW_ERASE);
 	}
@@ -3433,7 +3426,6 @@ LRESULT CQToolbar::OnSysColorChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
 	}
 
 	// Update the embedded toolbars heights
-	m_NavBar.OnHeightChange(ItemHeight);
 	m_LogoToolbar.OnHeightChange(ItemHeight);
 	m_ButtonBar.OnHeightChange(ItemHeight);
 
@@ -9362,7 +9354,7 @@ int CQToolbar::GetToolbarMinWidth()
 {
 	int MinWidth;
 
-	MinWidth=m_NavBar.GetSize().cx+m_ButtonBar.GetSize().cx;
+	MinWidth=m_ButtonBar.GetSize().cx;
 	if(g_Options2&OPTION2_ShowSearchBox) MinWidth+=180;
 	else
 	{
@@ -9902,6 +9894,7 @@ LRESULT CQToolbar::OnQueroToolbarCommand(UINT uMsg, WPARAM wParam, LPARAM lParam
 		}
 		else SetBlockAds(g_BlockAds|ADBLOCKER_Enable);
 		break;
+
 	case QUERO_COMMAND_SETHIDEFLASHADS:
 		SetHideFlashAds((lParam&OPTION2_HideFlashAds)!=0);
 		break;
@@ -9935,7 +9928,6 @@ void CQToolbar::ShowToolbarIfHidden()
 			{
 				BOOL b;
 
-				m_NavBar.ShowButtons(0);
 				m_LogoToolbar.UpdatePosition();
 				m_ButtonBar.ShowButtons(0);
 				OnSysColorChange(WM_SYSCOLORCHANGE,0,0,b);

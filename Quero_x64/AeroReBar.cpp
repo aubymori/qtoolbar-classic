@@ -141,7 +141,7 @@ LRESULT CAeroReBar::OnEraseBackground(UINT uMsg, WPARAM wParam, LPARAM lParam, B
 
 					if(bDrawTransparentBackground)
 					{
-						hBrush=(HBRUSH)GetStockObject(BLACK_BRUSH);
+						hBrush=(HBRUSH)GetStockObject(COLOR_WINDOW);
 						if(hBrush) FillRect((HDC)wParam,&rect_QToolbar,hBrush);
 
 						// Calculate the top frame margin
@@ -152,14 +152,7 @@ LRESULT CAeroReBar::OnEraseBackground(UINT uMsg, WPARAM wParam, LPARAM lParam, B
 			}
 
 			// Do not extend frame if theater mode is active
-			if(bTheaterMode) NewDwmFrameTopMargin=0;
-			// If top margin was not set, extend frame above ReBar
-			else if(NewDwmFrameTopMargin==0)
-			{
-				MapWindowPoints(hwnd_IEFrame,(LPPOINT)&rect_ReBar,2);
-				NewDwmFrameTopMargin=rect_ReBar.top;
-				bDrawTransparentBackground=false;
-			}
+			NewDwmFrameTopMargin=0;
 
 			// Extend frame into client area
 			ExtendFrameIntoClientArea(hwnd_IEFrame,NewDwmFrameTopMargin);
@@ -202,7 +195,6 @@ LRESULT CAeroReBar::OnEraseBackground(UINT uMsg, WPARAM wParam, LPARAM lParam, B
 			margins.cxRightWidth=0;
 			margins.cyBottomHeight=0;
 			margins.cyTopHeight=rect_ReBar.top;
-			DwmExtendFrameIntoClientArea(hwnd_IEFrame,&margins);
 
 			// Update top margin
 			DwmFrameTopMargin=margins.cyTopHeight;
@@ -239,23 +231,15 @@ void CAeroReBar::ExtendFrameIntoClientArea(HWND hwnd_IEFrame,int NewDwmFrameTopM
 		DwmFrameTopMargin=NewDwmFrameTopMargin;
 
 		// Update Toolbar Background Bitmap
-		InterlockedIncrement(&g_ToolbarBackgroundState);
+		//InterlockedIncrement(&g_ToolbarBackgroundState);
 
 		// Make background opaque if the toolbar looses Aero Glass
-		if(NewDwmFrameTopMargin<OldDwmFrameTopMargin)
-			::RedrawWindow(m_hWnd,NULL,NULL,RDW_INVALIDATE|RDW_NOERASE|RDW_UPDATENOW|RDW_ALLCHILDREN);
 
 		// Extend frame into client area
-		DwmExtendFrameIntoClientArea(hwnd_IEFrame,&margins);
 		//QDEBUG_PRINTF(L"FrameTopHeight",L"%d",margins.cyTopHeight);
-
-		// Make background transparent if the toolbar gains Aero Glass
-		if(NewDwmFrameTopMargin>OldDwmFrameTopMargin)
-			::RedrawWindow(m_hWnd,NULL,NULL,RDW_INVALIDATE|RDW_NOERASE|RDW_UPDATENOW|RDW_ALLCHILDREN);
 	}
 	else
 	{
-		DwmExtendFrameIntoClientArea(hwnd_IEFrame,&margins);
 	}
 }
 
@@ -278,6 +262,5 @@ void CAeroReBar::OnEnableAeroThemeChanged()
 
 		// Extend frame above ReBar
 		MapWindowPoints(hwnd_IEFrame,(LPPOINT)&rect_ReBar,2);
-		ExtendFrameIntoClientArea(hwnd_IEFrame,rect_ReBar.top);
 	}
 }

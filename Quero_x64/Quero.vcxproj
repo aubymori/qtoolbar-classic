@@ -51,6 +51,7 @@
     <UseOfMfc>false</UseOfMfc>
     <UseOfAtl>Static</UseOfAtl>
     <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -83,7 +84,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|x64'">
     <OutDir>$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <LinkIncremental>false</LinkIncremental>
+    <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|Win32'">
     <OutDir>.\DebugU\</OutDir>
@@ -151,17 +152,12 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|x64'">
     <CustomBuildStep>
-      <Message>Performing registration</Message>
-      <Command>if "%25OS%25"=="" goto NOTNT
-if not "%25OS%25"=="Windows_NT" goto NOTNT
-regsvr32 /s /c "$(TargetPath)"
-echo regsvr32 exec. time &gt; "$(OutDir)regsvr32.trg"
-goto end
-:NOTNT
-echo Warning : Cannot register Unicode DLL on Windows 95
-:end
-</Command>
-      <Outputs>$(OutDir)regsvr32.trg;%(Outputs)</Outputs>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
+      <Outputs>
+      </Outputs>
     </CustomBuildStep>
     <Midl>
       <TargetEnvironment>X64</TargetEnvironment>
@@ -169,7 +165,7 @@ echo Warning : Cannot register Unicode DLL on Windows 95
       <HeaderFileName />
     </Midl>
     <ClCompile>
-      <Optimization>Full</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <PreprocessorDefinitions>NDEBUG;_WIN32;_WINDOWS;_USRDLL;ISOLATION_AWARE_ENABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
@@ -184,6 +180,7 @@ echo Warning : Cannot register Unicode DLL on Windows 95
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat />
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -201,6 +198,8 @@ echo Warning : Cannot register Unicode DLL on Windows 95
       <SubSystem>Windows</SubSystem>
       <ImportLibrary>.\ReleaseUMinDependency/Quero.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
+      <MapExports>true</MapExports>
+      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
