@@ -1,0 +1,485 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{6c8c5970-6475-4ee3-b805-12fe0e03a612}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{021c7b35-00b9-4bd8-82b9-b7e696b78b49}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{24101da5-310c-4491-9802-561a49429f07}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AeroReBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AutoComplete.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ButtonBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CertificateDownloader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ComboEngine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ComboQuero.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ContentFilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Downloader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FavIcon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IconAnimation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IDNA.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LogoToolbar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MenuIcon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NavBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OLEDataObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OLEDropSource.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OLEEnumFormat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Profiles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="QDebug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="QEditCtrl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="QToolbar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Quero.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="QueroBand.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="QueroFilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RedirectRequest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StdAfx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Toolbar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ToolbarIcons.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIEditInplace.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIListBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIOptionsAdBlocker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIOptionsAdvanced.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIOptionsAppearance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIOptionsProfiles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIOptionsPropSheet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIOptionsSecurity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIOptionsSettings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIResizeWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UISearchEngine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UISearchProfile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIWarning.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIWhiteList.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UIZoomFactor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Quero.def">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="QueroBand.rgs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="QueroFilter.rgs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="UISettingsPropSheet.rgs">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="Quero.idl">
+      <Filter>Source Files</Filter>
+    </Midl>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Quero.rc">
+      <Filter>Source Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AeroReBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AutoComplete.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ButtonBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CertificateDownloader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ComboEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ComboQuero.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ContentFilter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Downloader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FavIcon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IconAnimation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IDNA.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LogoToolbar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MenuIcon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NavBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OLEDataObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OLEDropSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OLEEnumFormat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Profiles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="QDebug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="QEditCtrl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="QToolbar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Quero.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="QueroBand.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="QueroFilter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RedirectRequest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StdAfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Toolbar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ToolbarIcons.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIEditInplace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIListBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIOptionsAdBlocker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIOptionsAdvanced.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIOptionsAppearance.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIOptionsProfiles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIOptionsPropSheet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIOptionsSecurity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIOptionsSettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIResizeWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UISearchEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UISearchProfile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIWarning.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIWhitelist.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UIZoomFactor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="E:\Data\Web\wwwquero\images\bar1.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="button_go.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="button_go_hot.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="button_quero.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="button_quero_256.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="button_quero_small.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="E:\Data\Web\wwwquero\images\dot1.gif">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="engine1.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icologo1.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icologo1b.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icon_123.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icon_bin.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icon_book.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icon_chart.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icon_compass.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icon_engine.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icon_idn.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icon_lock.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icon_movie.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icon_price.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icon_science.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icon_telephone.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icon_trolley.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icon_tv.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icon_weather.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="nav_back.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="nav_back_disabled.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="nav_back_hot.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="nav_forward.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="nav_forward_disabled.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="nav_forward_hot.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="nav_home.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="nav_home_hot.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="nav_refresh.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="nav_refresh_hot.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="nav_stop.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="nav_stop_hot.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="options_adblocker.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="options_buttons.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="options_highlight.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="options_navigation.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="options_search.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="options_security.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="options_typefind.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="E:\Data\Web\wwwquero\images\qtoolbar.gif">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="quero.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="E:\Data\Web\wwwquero\images\quero1.gif">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="quero1.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="quero1b.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="quero2.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="quero2b.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="search.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="search_hot.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="search_notfound.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="separator.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="shield.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="url1.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="beep.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="Quero.dll.manifest" />
+  </ItemGroup>
+</Project>

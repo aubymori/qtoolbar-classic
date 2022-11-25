@@ -1,0 +1,522 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Unicode Debug|Win32">
+      <Configuration>Unicode Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Unicode Debug|x64">
+      <Configuration>Unicode Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Unicode Release MinDependency|Win32">
+      <Configuration>Unicode Release MinDependency</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Unicode Release MinDependency|x64">
+      <Configuration>Unicode Release MinDependency</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{70B3D2A8-0BE2-45AF-AFA1-698C314AB2C3}</ProjectGuid>
+    <RootNamespace>Quero</RootNamespace>
+    <Keyword>AtlProj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <UseOfAtl>Static</UseOfAtl>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <UseOfAtl>Static</UseOfAtl>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <UseOfAtl>Static</UseOfAtl>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>16.0.32830.301</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|Win32'">
+    <OutDir>.\ReleaseUMinDependency\</OutDir>
+    <IntDir>.\ReleaseUMinDependency\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|x64'">
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|Win32'">
+    <OutDir>.\DebugU\</OutDir>
+    <IntDir>.\DebugU\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|x64'">
+    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|Win32'">
+    <CustomBuildStep>
+      <Message>Performing registration</Message>
+      <Command>if "%25OS%25"=="" goto NOTNT
+if not "%25OS%25"=="Windows_NT" goto NOTNT
+regsvr32 /s /c "$(TargetPath)"
+echo regsvr32 exec. time &gt; "$(OutDir)regsvr32.trg"
+goto end
+:NOTNT
+echo Warning : Cannot register Unicode DLL on Windows 95
+:end
+</Command>
+      <Outputs>$(OutDir)regsvr32.trg;%(Outputs)</Outputs>
+    </CustomBuildStep>
+    <Midl>
+      <TypeLibraryName>.\ReleaseUMinDependency/Quero.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <Optimization>MinSpace</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <PreprocessorDefinitions>NDEBUG;_WIN32;_WINDOWS;_USRDLL;ISOLATION_AWARE_ENABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>.\ReleaseUMinDependency/Quero.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\ReleaseUMinDependency/</AssemblerListingLocation>
+      <ObjectFileName>.\ReleaseUMinDependency/</ObjectFileName>
+      <ProgramDataBaseFileName>.\ReleaseUMinDependency/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat />
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0c07</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalOptions>/MAPINFO:LINES /MAPINFO:EXPORTS  %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>comctl32.lib;winmm.lib;wininet.lib;Usp10.lib;shlwapi.lib;dwmapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>.\ReleaseUMinDependency/Quero.dll</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ModuleDefinitionFile>.\Quero.def</ModuleDefinitionFile>
+      <ProgramDatabaseFile>.\ReleaseUMinDependency/Quero.pdb</ProgramDatabaseFile>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>.\ReleaseUMinDependency/Quero.map</MapFileName>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>.\ReleaseUMinDependency/Quero.lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\ReleaseUMinDependency/Quero.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|x64'">
+    <CustomBuildStep>
+      <Message>Performing registration</Message>
+      <Command>if "%25OS%25"=="" goto NOTNT
+if not "%25OS%25"=="Windows_NT" goto NOTNT
+regsvr32 /s /c "$(TargetPath)"
+echo regsvr32 exec. time &gt; "$(OutDir)regsvr32.trg"
+goto end
+:NOTNT
+echo Warning : Cannot register Unicode DLL on Windows 95
+:end
+</Command>
+      <Outputs>$(OutDir)regsvr32.trg;%(Outputs)</Outputs>
+    </CustomBuildStep>
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+      <TypeLibraryName>.\ReleaseUMinDependency/Quero.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <PreprocessorDefinitions>NDEBUG;_WIN32;_WINDOWS;_USRDLL;ISOLATION_AWARE_ENABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>.\ReleaseUMinDependency/Quero.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\ReleaseUMinDependency/</AssemblerListingLocation>
+      <ObjectFileName>.\ReleaseUMinDependency/</ObjectFileName>
+      <ProgramDataBaseFileName>.\ReleaseUMinDependency/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat />
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0c07</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalOptions>/NXCOMPAT /DYNAMICBASE %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>comctl32.lib;winmm.lib;wininet.lib;winhttp.lib;crypt32.lib;Usp10.lib;shlwapi.lib;dwmapi.lib;windowscodecs.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>.\ReleaseUMinDependency/Quero.dll</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ModuleDefinitionFile>.\Quero.def</ModuleDefinitionFile>
+      <ProgramDatabaseFile>.\ReleaseUMinDependency/Quero.pdb</ProgramDatabaseFile>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>.\ReleaseUMinDependency/Quero.map</MapFileName>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>.\ReleaseUMinDependency/Quero.lib</ImportLibrary>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\ReleaseUMinDependency/Quero.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|Win32'">
+    <CustomBuildStep>
+      <Message>Performing registration</Message>
+      <Command>if "%25OS%25"=="" goto NOTNT
+if not "%25OS%25"=="Windows_NT" goto NOTNT
+regsvr32 /s /c "$(TargetPath)"
+echo regsvr32 exec. time &gt; "$(OutDir)regsvr32.trg"
+goto end
+:NOTNT
+echo Warning : Cannot register Unicode DLL on Windows 95
+:end
+</Command>
+      <Outputs>$(OutDir)regsvr32.trg;%(Outputs)</Outputs>
+    </CustomBuildStep>
+    <Midl>
+      <TypeLibraryName>.\DebugU/Quero.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;WIN32;_WINDOWS;_USRDLL;ISOLATION_AWARE_ENABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>.\DebugU/Quero.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\DebugU/</AssemblerListingLocation>
+      <ObjectFileName>.\DebugU/</ObjectFileName>
+      <ProgramDataBaseFileName>.\DebugU/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0c07</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>comctl32.lib;winmm.lib;wininet.lib;Usp10.lib;shlwapi.lib;dwmapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>.\DebugU/Quero.dll</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ModuleDefinitionFile>.\Quero.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\DebugU/Quero.pdb</ProgramDatabaseFile>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>.\DebugU/Quero.map</MapFileName>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>.\DebugU/Quero.lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\DebugU/Quero.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|x64'">
+    <CustomBuildStep>
+      <Message>Performing registration</Message>
+      <Command>if "%25OS%25"=="" goto NOTNT
+if not "%25OS%25"=="Windows_NT" goto NOTNT
+regsvr32 /s /c "$(TargetPath)"
+echo regsvr32 exec. time &gt; "$(OutDir)regsvr32.trg"
+goto end
+:NOTNT
+echo Warning : Cannot register Unicode DLL on Windows 95
+:end
+</Command>
+      <Outputs>$(OutDir)regsvr32.trg;%(Outputs)</Outputs>
+    </CustomBuildStep>
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+      <TypeLibraryName>.\DebugU/Quero.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;WIN32;_WINDOWS;_USRDLL;ISOLATION_AWARE_ENABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>.\DebugU/Quero.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\DebugU/</AssemblerListingLocation>
+      <ObjectFileName>.\DebugU/</ObjectFileName>
+      <ProgramDataBaseFileName>.\DebugU/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0c07</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalOptions>/NXCOMPAT /DYNAMICBASE %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>comctl32.lib;winmm.lib;wininet.lib;winhttp.lib;crypt32.lib;Usp10.lib;shlwapi.lib;dwmapi.lib;windowscodecs.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>.\DebugU/Quero.dll</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ModuleDefinitionFile>.\Quero.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\DebugU/Quero.pdb</ProgramDatabaseFile>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>.\DebugU/Quero.map</MapFileName>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>.\DebugU/Quero.lib</ImportLibrary>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\DebugU/Quero.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="AeroReBar.cpp" />
+    <ClCompile Include="AutoComplete.cpp" />
+    <ClCompile Include="ButtonBar.cpp" />
+    <ClCompile Include="CertificateDownloader.cpp" />
+    <ClCompile Include="ComboEngine.cpp" />
+    <ClCompile Include="ComboQuero.cpp" />
+    <ClCompile Include="ContentFilter.cpp" />
+    <ClCompile Include="Downloader.cpp" />
+    <ClCompile Include="FavIcon.cpp" />
+    <ClCompile Include="IconAnimation.cpp" />
+    <ClCompile Include="IDNA.cpp" />
+    <ClCompile Include="LogoToolbar.cpp" />
+    <ClCompile Include="MenuIcon.cpp" />
+    <ClCompile Include="NavBar.cpp" />
+    <ClCompile Include="OLEDataObject.cpp" />
+    <ClCompile Include="OLEDropSource.cpp" />
+    <ClCompile Include="OLEEnumFormat.cpp" />
+    <ClCompile Include="Profiles.cpp" />
+    <ClCompile Include="QDebug.cpp" />
+    <ClCompile Include="QEditCtrl.cpp" />
+    <ClCompile Include="QToolbar.cpp" />
+    <ClCompile Include="Quero.cpp" />
+    <ClCompile Include="QueroBand.cpp" />
+    <ClCompile Include="QueroFilter.cpp" />
+    <ClCompile Include="RedirectRequest.cpp" />
+    <ClCompile Include="StdAfx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Toolbar.cpp" />
+    <ClCompile Include="ToolbarIcons.cpp" />
+    <ClCompile Include="UIEditInplace.cpp" />
+    <ClCompile Include="UIListBox.cpp" />
+    <ClCompile Include="UIOptionsAdBlocker.cpp" />
+    <ClCompile Include="UIOptionsAdvanced.cpp" />
+    <ClCompile Include="UIOptionsAppearance.cpp" />
+    <ClCompile Include="UIOptionsProfiles.cpp" />
+    <ClCompile Include="UIOptionsPropSheet.cpp" />
+    <ClCompile Include="UIOptionsSecurity.cpp" />
+    <ClCompile Include="UIOptionsSettings.cpp" />
+    <ClCompile Include="UIResizeWindow.cpp" />
+    <ClCompile Include="UISearchEngine.cpp" />
+    <ClCompile Include="UISearchProfile.cpp" />
+    <ClCompile Include="UIWarning.cpp" />
+    <ClCompile Include="UIWhiteList.cpp" />
+    <ClCompile Include="UIZoomFactor.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Quero.def" />
+    <None Include="QueroBand.rgs" />
+    <None Include="QueroFilter.rgs" />
+    <None Include="UISettingsPropSheet.rgs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="Quero.idl">
+      <GenerateStublessProxies Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|Win32'">true</GenerateStublessProxies>
+      <TypeLibraryName Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|Win32'">.\Quero.tlb</TypeLibraryName>
+      <HeaderFileName Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|Win32'">Quero.h</HeaderFileName>
+      <InterfaceIdentifierFileName Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|Win32'">Quero_i.c</InterfaceIdentifierFileName>
+      <GenerateStublessProxies Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|x64'">true</GenerateStublessProxies>
+      <TypeLibraryName Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|x64'">.\Quero.tlb</TypeLibraryName>
+      <HeaderFileName Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|x64'">Quero.h</HeaderFileName>
+      <InterfaceIdentifierFileName Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|x64'">Quero_i.c</InterfaceIdentifierFileName>
+      <GenerateStublessProxies Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|Win32'">true</GenerateStublessProxies>
+      <TypeLibraryName Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|Win32'">.\Quero.tlb</TypeLibraryName>
+      <HeaderFileName Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|Win32'">Quero.h</HeaderFileName>
+      <InterfaceIdentifierFileName Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|Win32'">Quero_i.c</InterfaceIdentifierFileName>
+      <GenerateStublessProxies Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|x64'">true</GenerateStublessProxies>
+      <TypeLibraryName Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|x64'">.\Quero.tlb</TypeLibraryName>
+      <HeaderFileName Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|x64'">Quero.h</HeaderFileName>
+      <InterfaceIdentifierFileName Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|x64'">Quero_i.c</InterfaceIdentifierFileName>
+    </Midl>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Quero.rc">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|Win32'">$(OUTDIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|x64'">$(OUTDIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|Win32'">$(OUTDIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|x64'">$(OUTDIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AeroReBar.h" />
+    <ClInclude Include="AutoComplete.h" />
+    <ClInclude Include="ButtonBar.h" />
+    <ClInclude Include="CertificateDownloader.h" />
+    <ClInclude Include="ComboEngine.h" />
+    <ClInclude Include="ComboQuero.h" />
+    <ClInclude Include="ContentFilter.h" />
+    <ClInclude Include="Downloader.h" />
+    <ClInclude Include="FavIcon.h" />
+    <ClInclude Include="IconAnimation.h" />
+    <ClInclude Include="IDNA.h" />
+    <ClInclude Include="LogoToolbar.h" />
+    <ClInclude Include="MenuIcon.h" />
+    <ClInclude Include="NavBar.h" />
+    <ClInclude Include="OLEDataObject.h" />
+    <ClInclude Include="OLEDropSource.h" />
+    <ClInclude Include="OLEEnumFormat.h" />
+    <ClInclude Include="Profiles.h" />
+    <ClInclude Include="QDebug.h" />
+    <ClInclude Include="QEditCtrl.h" />
+    <ClInclude Include="QToolbar.h" />
+    <ClInclude Include="Quero.h" />
+    <ClInclude Include="QueroBand.h" />
+    <ClInclude Include="QueroFilter.h" />
+    <ClInclude Include="RedirectRequest.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="Toolbar.h" />
+    <ClInclude Include="ToolbarIcons.h" />
+    <ClInclude Include="UIEditInplace.h" />
+    <ClInclude Include="UIListBox.h" />
+    <ClInclude Include="UIOptionsAdBlocker.h" />
+    <ClInclude Include="UIOptionsAdvanced.h" />
+    <ClInclude Include="UIOptionsAppearance.h" />
+    <ClInclude Include="UIOptionsProfiles.h" />
+    <ClInclude Include="UIOptionsPropSheet.h" />
+    <ClInclude Include="UIOptionsSecurity.h" />
+    <ClInclude Include="UIOptionsSettings.h" />
+    <ClInclude Include="UIResizeWindow.h" />
+    <ClInclude Include="UISearchEngine.h" />
+    <ClInclude Include="UISearchProfile.h" />
+    <ClInclude Include="UIWarning.h" />
+    <ClInclude Include="UIWhitelist.h" />
+    <ClInclude Include="UIZoomFactor.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="button_go.ico" />
+    <Image Include="button_go_hot.ico" />
+    <Image Include="button_quero.ico" />
+    <Image Include="button_quero_256.ico" />
+    <Image Include="button_quero_small.ico" />
+    <Image Include="E:\Data\Web\wwwquero\images\bar1.jpg" />
+    <Image Include="E:\Data\Web\wwwquero\images\dot1.gif" />
+    <Image Include="E:\Data\Web\wwwquero\images\qtoolbar.gif" />
+    <Image Include="E:\Data\Web\wwwquero\images\quero1.gif" />
+    <Image Include="engine1.ico" />
+    <Image Include="icologo1.ico" />
+    <Image Include="icologo1b.ico" />
+    <Image Include="icon_123.ico" />
+    <Image Include="icon_bin.ico" />
+    <Image Include="icon_book.ico" />
+    <Image Include="icon_chart.ico" />
+    <Image Include="icon_compass.ico" />
+    <Image Include="icon_engine.ico" />
+    <Image Include="icon_idn.ico" />
+    <Image Include="icon_lock.ico" />
+    <Image Include="icon_movie.ico" />
+    <Image Include="icon_price.ico" />
+    <Image Include="icon_science.ico" />
+    <Image Include="icon_telephone.ico" />
+    <Image Include="icon_trolley.ico" />
+    <Image Include="icon_tv.ico" />
+    <Image Include="icon_weather.ico" />
+    <Image Include="nav_back.ico" />
+    <Image Include="nav_back_disabled.ico" />
+    <Image Include="nav_back_hot.ico" />
+    <Image Include="nav_forward.ico" />
+    <Image Include="nav_forward_disabled.ico" />
+    <Image Include="nav_forward_hot.ico" />
+    <Image Include="nav_home.ico" />
+    <Image Include="nav_home_hot.ico" />
+    <Image Include="nav_refresh.ico" />
+    <Image Include="nav_refresh_hot.ico" />
+    <Image Include="nav_stop.ico" />
+    <Image Include="nav_stop_hot.ico" />
+    <Image Include="options_adblocker.ico" />
+    <Image Include="options_buttons.ico" />
+    <Image Include="options_highlight.ico" />
+    <Image Include="options_navigation.ico" />
+    <Image Include="options_search.ico" />
+    <Image Include="options_security.ico" />
+    <Image Include="options_typefind.ico" />
+    <Image Include="quero.ico" />
+    <Image Include="quero1.ico" />
+    <Image Include="quero1b.ico" />
+    <Image Include="quero2.ico" />
+    <Image Include="quero2b.ico" />
+    <Image Include="search.ico" />
+    <Image Include="search_hot.ico" />
+    <Image Include="search_notfound.ico" />
+    <Image Include="separator.bmp" />
+    <Image Include="shield.bmp" />
+    <Image Include="url1.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="beep.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="Quero.dll.manifest" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
