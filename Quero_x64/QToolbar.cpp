@@ -1785,9 +1785,6 @@ void CQToolbar::OnQueroButtonClick(UINT flags,POINT *point,RECT *rcExclude)
 					break;
 				case ID_QUERO_BLOCKADS:
 					PostMessage(WM_QUERO_TOOLBAR_COMMAND,QUERO_COMMAND_SETBLOCKADS,g_BlockAds^ADBLOCKER_Enable);
-					break;				
-				case ID_QUERO_BLOCKPOPUPS:
-					SetBlockPopUps(g_BlockPopUps^POPUPBLOCKER_Enable);
 					break;
 				case ID_QUERO_CLEARHISTORY:
 					ClearHistory();
@@ -1928,7 +1925,6 @@ void CQToolbar::SetBlockAds(DWORD BlockAds)
 		g_BlockAds=BlockAds;
 		if(g_BlockAds&ADBLOCKER_Enable)
 		{
-			m_pBand->InstallAdBlocker(true);
 			if(g_BlockAds&ADBLOCKER_BLOCK_FLASH)
 			{
 				if(GetHtmlDocument2(&pHtmlDocument))
@@ -1940,50 +1936,9 @@ void CQToolbar::SetBlockAds(DWORD BlockAds)
 		}
 		else
 		{
-			m_pBand->InstallAdBlocker(false);
 			if(bTemporarilyUnblock==false) PostMessage(WM_COMMAND,IDM_REFRESH);
 		}
 	}
-}
-
-void CQToolbar::SetBlockPopUps(DWORD BlockPopUps)
-{
-
-	if(IsOperationAllowed(LOCK_SetBlockPopUps))
-	{
-		g_BlockPopUps=BlockPopUps;
-
-		if(m_pBand->InstallPopUpBlocker(g_BlockPopUps&POPUPBLOCKER_Enable))
-		{
-			SaveSettingsValue(SETTINGS_VALUES_BLOCKPOPUPS,g_BlockPopUps);
-		}
-		else
-		{
-			PutStatusText(GetString(IDS_ERR_PUBLOCKER_UNAVAILABLE));
-			MessageBeep(MB_ICONEXCLAMATION);
-		}
-	}
-}
-
-void CQToolbar::SetHideFlashAds(bool bHide)
-{
-	IHTMLDocument2 *pHtmlDocument;
-
-	if(IsOperationAllowed(LOCK_SetHideFlashAds))
-	{
-		if(bHide) g_Options2|=OPTION2_HideFlashAds;
-		else g_Options2&=~OPTION2_HideFlashAds;
-
-		if(GetHtmlDocument2(&pHtmlDocument))
-		{		
-			HideFlashAds(pHtmlDocument,bHide);
-			pHtmlDocument->Release();
-		}
-
-		// Save highlight setting in registry
-		SaveSettingsValue(SETTINGS_VALUES_OPTIONS2,g_Options2);
-
-	} // End IsOperationAllowed
 }
 
 void CQToolbar::SetAutoMaximize(bool bAutoMaximize)
@@ -2067,7 +2022,6 @@ LRESULT CQToolbar::OnShowOptions(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 		//Sheet.SetActivePage(3);
 		if(Sheet.DoModal(GetIEFrameWindow()) == IDOK)
 		{
-			IHTMLDocument2 *pHtmlDocument;
 
 			// Update search profiles
 			if(PageProfiles.SaveChanges())
@@ -2103,11 +2057,6 @@ LRESULT CQToolbar::OnShowOptions(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 
 				if(changed)
 				{
-					if(m_pBand->InstallPopUpBlocker(g_BlockPopUps&POPUPBLOCKER_Enable)==false)
-					{
-						PutStatusText(GetString(IDS_ERR_PUBLOCKER_UNAVAILABLE));
-						MessageBeep(MB_ICONEXCLAMATION);
-					}
 				}
 			}
 			if(PageAdBlocker.m_BlockAds!=g_BlockAds)
@@ -2122,16 +2071,7 @@ LRESULT CQToolbar::OnShowOptions(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 
 				if(changed)
 				{
-					if(g_BlockAds&ADBLOCKER_Enable)
-					{
-						m_pBand->InstallAdBlocker(true);
-						if(GetHtmlDocument2(&pHtmlDocument))
-						{
-							HideFlashAds(pHtmlDocument,true);
-							pHtmlDocument->Release();
-						}
-					}
-					else m_pBand->InstallAdBlocker(false);
+					
 				}
 			}
 
@@ -5775,20 +5715,11 @@ void CQToolbar::OnContentBlockedButtonClick(POINT *point,RECT *rcExclude)
 			case ID_ALLOWED_SITES:
 				ShowWhiteList(m_ComboQuero.m_hWndEdit,true);
 				break;
-			case ID_BLOCK_ADS:
-				SetBlockAds(g_BlockAds^ADBLOCKER_Enable);
-				break;
-			case ID_BLOCK_POPUPS:
-				SetBlockPopUps(g_BlockPopUps^POPUPBLOCKER_Enable);
-				break;
 			case ID_TEMP_UNBLOCK:
 				TemporarilyUnblockCurrentDomain(!bTemporarilyUnblock,bTemporarilyUnblock,true);
 				if(bTemporarilyUnblock) PostMessage(WM_COMMAND,IDM_REFRESH);
 				else SendMessage(WM_QUERO_TOOLBAR_COMMAND,QUERO_COMMAND_HIDEFLASHADS,0);
 				UpdateQueroInstances(UPDATE_TEMP_UNBLOCK);
-				break;
-			case ID_HIDE_FLASH:
-				SetHideFlashAds(((g_Options2&OPTION2_HideFlashAds)^OPTION2_HideFlashAds)!=0);
 				break;
 			default:
 				if(result>0 && result<=bcIndexSnapshot)
@@ -9544,8 +9475,6 @@ bool CQToolbar::IsPopUpMenuVisible()
 LRESULT CQToolbar::OnQueroToolbarCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	LRESULT result;
-	RECT rcExclude;
-	POINT point;
 
 	result=0;
 
@@ -9655,10 +9584,6 @@ LRESULT CQToolbar::OnQueroToolbarCommand(UINT uMsg, WPARAM wParam, LPARAM lParam
 			UpdateQueroInstances(UPDATE_TEMP_UNBLOCK);
 		}
 		else SetBlockAds(g_BlockAds|ADBLOCKER_Enable);
-		break;
-
-	case QUERO_COMMAND_SETHIDEFLASHADS:
-		SetHideFlashAds((lParam&OPTION2_HideFlashAds)!=0);
 		break;
 
 	case QUERO_COMMAND_IEFRAME_CHANGED:
