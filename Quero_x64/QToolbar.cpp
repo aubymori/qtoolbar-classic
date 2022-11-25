@@ -1275,7 +1275,6 @@ LRESULT CQToolbar::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandle
 	LONG toolbarwidth;
 	LONG toolbarheight;
 	LONG delta;
-	LONG top;
 
 	// Update Toolbar Background Bitmap
 	InterlockedIncrement(&g_ToolbarBackgroundState);
@@ -1310,15 +1309,11 @@ LRESULT CQToolbar::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandle
 		// Add padding, if navigation buttons are present
 		wndRect.top=GetToolbarPadding();
 
-		// Position the Button Bar
-		top=(toolbarheight-m_ButtonBar.GetSize().cy)/2;
-		if(IsBelowWindows8() && g_IE_MajorVersion>=9 && (g_Options2&OPTION2_EnableAeroTheme) && top>0) top--;
-		m_ButtonBar.MoveWindow(wndRect.right,top,m_ButtonBar.GetSize().cx,m_ButtonBar.GetSize().cy,TRUE);
 
 		wndRect.bottom+=100;
 
 		// Calculate the dimensions of the Quero combo box
-		wndRect.left+=m_LogoToolbar.GetSize().cx;
+		wndRect.left+=m_LogoToolbar.GetSize().cx+1;
 		if((g_Options2&OPTION2_ShowSearchBox) || (g_Options&OPTION_ShowSearchEngineComboBox)) wndRect.left+=LOGOGAP;
 		if(g_Options2&OPTION2_ShowSearchBox)
 		{	
@@ -9354,7 +9349,7 @@ int CQToolbar::GetToolbarMinWidth()
 {
 	int MinWidth;
 
-	MinWidth=m_ButtonBar.GetSize().cx;
+	MinWidth=0;
 	if(g_Options2&OPTION2_ShowSearchBox) MinWidth+=180;
 	else
 	{

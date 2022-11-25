@@ -52,7 +52,7 @@ void CLogoToolbar::LoadToolbarIcons()
 	WORD Icon;
 
 	m_bWhiteLogo=(g_Options&OPTION_WhiteQueroButton);
-	Icon=m_bWhiteLogo?IDI_QUERO_WHITE:IDI_QUERO;
+	Icon=IDI_QUERO;
 
 	m_ToolbarIcons.Create(g_Scaled_QueroLogoX,g_Scaled_QueroLogoY,(ILC_COLOR32|ILC_MASK),1,CREATE_TB_IMAGELIST);
 	m_ToolbarIcons.LoadIcons(TB_IMAGELIST,&Icon,1);
@@ -77,7 +77,7 @@ void CLogoToolbar::UpdatePosition()
 
 		if(IsBelowWindows8() && g_IE_MajorVersion>=9 && (g_Options2&OPTION2_EnableAeroTheme) && posy>0) posy--;
 
-		::MoveWindow(m_hWnd,m_pToolbar->GetNavBar()->GetSize().cx,posy,BarSize.cx,BarSize.cy,FALSE);
+		::MoveWindow(m_hWnd,1,posy,BarSize.cx,BarSize.cy,FALSE);
 	}
 }
 
