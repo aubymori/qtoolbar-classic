@@ -30,11 +30,7 @@
 
 #include <urlhist.h>
 #include <wininet.h>
-
-// Undocumented wininet functions
-
-INTERNETAPI_(BOOL) InternetShowSecurityInfoByURLW(LPCWSTR url,HWND hwnd);
-INTERNETAPI_(BOOL) InternetShowSecurityInfoByURLA(LPCSTR url,HWND hwnd);
+#include "QToolbar.h"
 
 #ifdef UNICODE
 #define InternetShowSecurityInfoByURL InternetShowSecurityInfoByURLW
@@ -806,23 +802,6 @@ LRESULT CComboQuero::OnClickDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 			SetText(m_pToolbar->currentURL,TYPE_ADDRESS,m_pToolbar->GetFavIcon(),true);
 			m_Edit.ShowWindow(SW_HIDE);
 		}
-		break;
-
-	case HOVER_LOCKBUTTON:
-	case HOVER_CERTIFICATE_ORGANIZATION:
-		// Show security certificate does not work
-		/*#define SHDVID_SSLSTATUS 33
-		IOleCommandTarget *pct;
-
-		if(SUCCEEDED_OK(m_pBand->GetWebBrowser()->QueryInterface(IID_IOleCommandTarget,(LPVOID*)&pct)))
-		{
-			pct->Exec(&CGID_ShellDocView, SHDVID_SSLSTATUS, 0, NULL, NULL);
-			pct->Release();
-		}*/
-
-		// Above code from msdn does nothing, so using undocumented function from wininet.dll instead
-		SetTextCurrentURL();
-		InternetShowSecurityInfoByURL(m_pToolbar->currentAsciiURL,m_hWndEdit);
 		break;
 
 	case HOVER_CONTENTBLOCKEDBUTTON:

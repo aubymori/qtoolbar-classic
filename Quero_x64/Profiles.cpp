@@ -1164,7 +1164,6 @@ bool CProfiles::UpdateUserProfiles()
 	DWORD flags;
 	UINT i;
 
-	QDEBUG_PRINT(L"UpdateUserProfiles",L"start");
 
 	hKeyDefaultUser=OpenProfiles(false,false);
 	if(hKeyDefaultUser)
@@ -1222,7 +1221,6 @@ bool CProfiles::UpdateUserProfiles()
 		RegCloseKey(hKeyDefaultUser);
 	}
 
-	QDEBUG_PRINT(L"UpdateUserProfiles",L"end");
 
 	return result;
 }

@@ -216,8 +216,6 @@ void CAeroReBar::ExtendFrameIntoClientArea(HWND hwnd_IEFrame,int NewDwmFrameTopM
 	MARGINS margins;
 	int OldDwmFrameTopMargin;
 
-	QD(L"ExtendFrameIntoClientArea");
-
 	margins.cxLeftWidth=0;
 	margins.cxRightWidth=0;
 	margins.cyBottomHeight=0;

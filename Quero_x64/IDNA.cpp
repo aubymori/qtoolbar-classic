@@ -30,7 +30,7 @@
 
 #include "StdAfx.h"
 #include "idna.h"
-#include "QDebug.h"
+
 #include "QToolbar.h"
 #include <strsafe.h>
 
@@ -8274,8 +8274,6 @@ bool CIDNA::split_labels (const TCHAR *url,bool bNoScheme)
 			LabelLengths[0]=len;
 			sep=p+len;
 			nLabels=1;
-
-			QDEBUG_PRINTF(L"IPv6",L"%s %d",sep,len);
 
 			IsIPv6=true;
 		}

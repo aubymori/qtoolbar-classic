@@ -25,7 +25,7 @@
 #include "stdafx.h"
 #include "OLEDataObject.h"
 #include "OLEEnumFormat.h"
-#include "QDebug.h"
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

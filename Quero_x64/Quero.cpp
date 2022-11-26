@@ -50,7 +50,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID /*lpReserved*/)
 	switch(dwReason)
 	{
 	case DLL_PROCESS_ATTACH:
-		QDEBUG_PRINTF(L"Quero Toolbar",L"version %x build %d launched.",QUERO_VERSION,QUERO_BUILD);
 		_Module.Init(ObjectMap, hInstance, &LIBID_QUEROLib);
         DisableThreadLibraryCalls(hInstance);
 		break;

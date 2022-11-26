@@ -24,14 +24,14 @@
 
 // #define VERSION_EN
 // #define VERSION_EN_WIN9X
-#define VERSION_EN_VISTA
-// #define VERSION_EN_X64
+// #define VERSION_EN_VISTA
+#define VERSION_EN_X64
 // #define VERSION_DE
 // #define VERSION_DE_WIN9X
 // #define VERSION_DE_VISTA
 // #define VERSION_DE_X64
 
-#define QUERO_BUILD 2
+#define QUERO_BUILD 3
 #define QUERO_LANGUAGE 0
 
 // #define COMPILE_FOR_WIN9X

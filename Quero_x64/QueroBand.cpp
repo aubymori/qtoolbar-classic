@@ -26,7 +26,6 @@
 #include <mmsystem.h>
 #include "Quero.h"
 #include "QueroBand.h"
-#include "LogoToolbar.h"
 
 // Window Vista specific
 
@@ -639,22 +638,6 @@ STDMETHODIMP CQueroBand::Invoke(DISPID dispidMember, REFIID riid, LCID lcid, WOR
 
 	switch(dispidMember)
 	{
-
-	case DISPID_COMMANDSTATECHANGE:
-		// The parameters for this DISPID:
-		// [0]: Enabled state - VT_BOOL
-		// [1]: Command identifier - VT_I4
-		switch(pDispParams->rgvarg[1].intVal)
-		{
-		case CSC_NAVIGATEBACK:
-			m_Toolbar.GetNavBar()->EnableButton(IDM_BACK,pDispParams->rgvarg[0].boolVal);
-			break;
-		case CSC_NAVIGATEFORWARD:
-			m_Toolbar.GetNavBar()->EnableButton(IDM_FORWARD,pDispParams->rgvarg[0].boolVal);
-			break;
-		}
-		break;
-
 	case DISPID_WINDOWSTATECHANGED:
 		// The parameters for this DISPID:
 		// [0]: dwValidFlagsMask - VT_I4
@@ -895,7 +878,6 @@ STDMETHODIMP CQueroBand::Invoke(DISPID dispidMember, REFIID riid, LCID lcid, WOR
 */
 	case DISPID_ONTHEATERMODE:
 	case DISPID_ONFULLSCREEN:
-		QD(L"fullscreen");
 		break;
 
 	case DISPID_QUIT:
@@ -1019,7 +1001,6 @@ QThreadData* GetCurrentQueroInstance()
 			}
 	}
 
-	QDEBUG_CODE if(QueroInstance==NULL) QDEBUG_PRINTF(L"GetCurrentQueroInstance",L"thread [%x] not found",ThreadId);
 
 	return QueroInstance;
 }
@@ -1037,7 +1018,6 @@ QThreadData* GetFirstQueroInstance()
 			break;
 		}
 
-	QDEBUG_CODE if(QueroInstance==NULL) QDEBUG_PRINTF(L"GetFirstQueroInstance",L"no instance found");
 
 	return QueroInstance;
 }
@@ -1060,7 +1040,6 @@ QThreadData* GetQueroInstanceActiveTab()
 			}
 	}
 
-	QDEBUG_CODE if(QueroInstance==NULL) QDEBUG_PRINT(L"GetQueroInstanceActiveTab",L"not found");
 
 	return QueroInstance;
 }
@@ -1128,7 +1107,6 @@ HRESULT STDMETHODCALLTYPE HTMLWindow3ShowModelessWrapper(IHTMLWindow3 __RPC_FAR*
 			{
 				if(QueroInstance->pToolbar->GetWhiteListBlockPopUps(NULL))
 				{
-					QDEBUG_PRINT(L"HTMLWindow3ShowModelessWrapper",L"AddToBlockedContent");
 					if(url) QueroInstance->pToolbar->AddToBlockedContent(BLOCKED_CONTENT_POPUP,url,NULL,false);
 					QueroInstance->pToolbar->PopupBlocked();
 				}
@@ -1137,7 +1115,6 @@ HRESULT STDMETHODCALLTYPE HTMLWindow3ShowModelessWrapper(IHTMLWindow3 __RPC_FAR*
 
 			ReleaseMutex(g_hQSharedDataMutex);
 		}
-		QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"HtmlWindow3");
 	}
 
 	if(AllowPopUp)
@@ -1329,7 +1306,6 @@ LRESULT CALLBACK KeyboardHookTab(int nCode, WPARAM wp, LPARAM lp)
 
 		ReleaseMutex(g_hQSharedDataMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"KeyboardHookTab");
 
 	return result;
 }
@@ -1565,7 +1541,6 @@ HRESULT STDMETHODCALLTYPE DocHostUIHandler_ShowContextMenu(IDocHostUIHandler __R
 									
 									if(bReleaseMutex) ReleaseMutex(g_hQSharedDataMutex);
 								} // Lock on thread data structure
-								QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"DocHostUIHandler");
 
 								SysFreeString(selection);
 							} // Selection available

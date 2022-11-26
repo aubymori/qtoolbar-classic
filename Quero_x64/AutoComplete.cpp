@@ -275,8 +275,6 @@ STDMETHODIMP CAutoComplete::Next(ULONG celt, LPOLESTR* rgelt, ULONG* pceltFetche
 
 		ReleaseMutex(g_hQSharedListMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"Next");
-
 	return (i==celt)?S_OK:S_FALSE;
 }
 
@@ -297,7 +295,6 @@ STDMETHODIMP CAutoComplete::Reset(void)
 {
 	m_nCurrentElement = 0;
 
-	QD(L"reset");
 	
 	m_pToolbar->SyncHistory();
 	m_pToolbar->SyncURLs();

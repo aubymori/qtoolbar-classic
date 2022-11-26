@@ -25,7 +25,6 @@
 #include "resource.h"
 #include "Quero.h"
 #include "QToolbar.h"
-#include "LogoToolbar.h"
 #include "UIOptionsPropSheet.h"
 #include "UIOptionsSettings.h"
 #include "UIOptionsSecurity.h"
@@ -55,6 +54,7 @@
 
 #include "..\QueroBroker\QueroBroker_i.c"
 
+#define LOGOGAP 2
 const int g_NavOpenMap[4]={0,navOpenInNewWindow,navOpenInNewTab,navOpenBackgroundTab};
 
 #define MapNewWinTabToNavOpen(newWinTab) g_NavOpenMap[newWinTab]
@@ -241,7 +241,6 @@ CQToolbar::CQToolbar() : m_pBrowser(NULL) , m_pBand(NULL) , m_IconAnimation(this
 				}
 			}
 			else g_hQSharedMemoryMutex=CreateMutex(NULL,FALSE,NULL);
-			QDEBUG_CODE if(g_QSharedMemory==NULL) QDEBUG_PRINT(L"CQToolbar",L"Creating QSharedMemory failed");
 			
 			#ifdef COMPILE_FOR_WINDOWS_VISTA
 			if(pSD) LocalFree(pSD);
@@ -302,7 +301,6 @@ CQToolbar::CQToolbar() : m_pBrowser(NULL) , m_pBand(NULL) , m_IconAnimation(this
 
 		ReleaseMutex(hQSharedDataMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"CQToolbar");
 
 	if(bCloseQueroSharedDataMutex) CloseHandle(hQSharedDataMutex);
 
@@ -319,9 +317,7 @@ CQToolbar::CQToolbar() : m_pBrowser(NULL) , m_pBand(NULL) , m_IconAnimation(this
 	// Connect to the Quero Broker
 	if(g_IE_MajorVersion>=7)
 	{
-		QD(L"Quero Broker creating");
 		CoCreateInstance(CLSID_QueroBroker,NULL,CLSCTX_LOCAL_SERVER, IID_IQueroBroker,(LPVOID*)&pQueroBroker);
-		QD(L"Quero Broker created");
 	}
 
 	// Set toolbar pointers
@@ -656,7 +652,6 @@ void CQToolbar::InitFontAndHeight()
 	}
 	else
 	{
-		QDEBUG_PRINTF(L"InitFontAndHeight",L"GetDC failed");
 		LogPixelsX=96;
 		LogPixelsY=96;
 	}
@@ -817,7 +812,6 @@ CQToolbar::~CQToolbar()
 		
 		ReleaseMutex(g_hQSharedDataMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINTF(L"SyncError",L"instance %d %s",QueroInstanceId,L"~CQToolbar");
 
 	if(m_AutoComplete)
 	{
@@ -856,7 +850,6 @@ CQToolbar::~CQToolbar()
 	// Release the Quero Broker
 	if(pQueroBroker) pQueroBroker->Release();
 
-	QDEBUG_PRINTF(L"Quero Toolbar",L"instance %d destroyed.",QueroInstanceId);
 }
 
 void CQToolbar::RemoveQueroInstance(int id)
@@ -1111,7 +1104,6 @@ void CQToolbar::CreateDeferred()
 		}
 		ReleaseMutex(g_hQSharedDataMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"CQToolbar::OnCreate");
 
 	// Initialize the Quero edit control
 	if(g_ShowURL==false)
@@ -1143,12 +1135,6 @@ void CQToolbar::CreateDeferred()
 
 	// Set bToolbarCreated
 	bToolbarCreated=true;
-
-	// Layout the toolbar
-	//::PostMessage(GetParent(),WM_SIZE,0,0);
-	//::PostMessage(m_hWnd,WM_SIZE,0,0);
-
-	QDEBUG_PRINTF(L"Quero Toolbar",L"instance %d created.",QueroInstanceId);
 }
 
 int CQToolbar::GetToolbarHeight()
@@ -1514,12 +1500,6 @@ LRESULT CQToolbar::OnNotify(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHand
 			}
 			break;
 		
-		case IDM_BACK:
-			lpdi->lpszText=m_NavBar.GetTravelLogTooltip(Tooltip,sizeof Tooltip,true);
-			break;
-		case IDM_FORWARD:
-			lpdi->lpszText=m_NavBar.GetTravelLogTooltip(Tooltip,sizeof Tooltip,false);
-			break;
 		case IDM_REFRESH:
 			HintId=IDS_HINT_REFRESH;
 			break;
@@ -2132,7 +2112,6 @@ LRESULT CQToolbar::OnShowOptions(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 
 				ReleaseMutex(g_hQSharedDataMutex);
 			}
-			QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"OnShowOptions");
 
 			newWarnings=g_Warnings;
 			if(PageSecurity.m_IDNWarning) newWarnings|=WARNING_IDN;
@@ -2382,7 +2361,6 @@ void CQToolbar::UpdateQueroInstances(UINT update)
 		
 		ReleaseMutex(g_hQSharedDataMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"UpdateQueroInstances");
 }
 
 void CQToolbar::UpdateQueroInstance(UINT update)
@@ -2495,14 +2473,6 @@ LRESULT CQToolbar::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 		{
 			switch(LOWORD(wParam))
 			{
-			case IDM_BACK:
-				m_NavBar.GoBackForward(true,SHORTCUT_OPTION_QUERO_TOOLBAR);
-				bHandled=TRUE;
-				break;
-			case IDM_FORWARD:
-				m_NavBar.GoBackForward(false,SHORTCUT_OPTION_QUERO_TOOLBAR);
-				bHandled=TRUE;
-				break;
 			case IDM_REFRESH:
 				ResetBlockedContent();
 				m_pBrowser->Refresh();
@@ -4720,11 +4690,9 @@ void CQToolbar::SyncHistory(bool Synchronize)
 
 				if(Synchronize) ReleaseMutex(g_hQSharedListMutex);
 			}
-			QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"ListMutex, SyncHistory");
 		}
 		if(Synchronize) ReleaseMutex(g_hQSharedMemoryMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"MemoryMutex, SyncHistory");
 }
 
 bool CQToolbar::SyncLocalHistory()
@@ -4754,7 +4722,6 @@ bool CQToolbar::SyncLocalHistory()
 		}
 		ReleaseMutex(g_hQSharedListMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"SyncLocalHistory");
 
 	return changed;
 }
@@ -4777,7 +4744,6 @@ void CQToolbar::CopyLastHistoryEntry(HistoryEntry *pHistoryEntry,bool Synchroniz
 			
 			if(Synchronize) ReleaseMutex(g_hQSharedListMutex);
 		}
-		QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"CopyLastHistoryEntry");
 	}
 }
 
@@ -4880,11 +4846,9 @@ void CQToolbar::SyncURLs(bool Synchronize)
 
 				if(Synchronize) ReleaseMutex(g_hQSharedListMutex);
 			}
-			QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"ListMutx, SyncURLs");
 		}
 		if(Synchronize) ReleaseMutex(g_hQSharedMemoryMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"MemoryMutx, SyncURLs");
 }
 
 void CQToolbar::SyncWhiteList(bool Synchronize)
@@ -4968,11 +4932,9 @@ void CQToolbar::SyncWhiteList(bool Synchronize)
 
 				if(Synchronize) ReleaseMutex(g_hQSharedListMutex);
 			}
-			QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"ListMutex, SyncWhiteList");
 		}
 		if(Synchronize) ReleaseMutex(g_hQSharedMemoryMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"MemoryMutex, SyncWhiteList");
 }
 
 void CQToolbar::FreeHistory(HistoryEntry* History,UINT* HistoryIndex)
@@ -5111,11 +5073,9 @@ void CQToolbar::AddToHistory(TCHAR *entry,BYTE type,BYTE flags,int engineid,int 
 
 					ReleaseMutex(g_hQSharedListMutex);
 				}
-				QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"ListMutex, AddToHistory");
 
 				ReleaseMutex(g_hQSharedMemoryMutex);
 			}
-			QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"MemoryMutex, AddToHistory");
 		}
 	} // End SaveSearchHistory || SaveAddressHistory enabled
 
@@ -5162,11 +5122,9 @@ void CQToolbar::DeleteFromHistory(TCHAR *entry)
 
 			ReleaseMutex(g_hQSharedListMutex);
 		}
-		QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"ListMutex, DeleteFromHistory");
 
 		ReleaseMutex(g_hQSharedMemoryMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"MemoryMutex, DeleteFromHistory");
 }
 
 void CQToolbar::AddToURLHistory(TCHAR *entry)
@@ -5245,11 +5203,9 @@ void CQToolbar::AddToURLHistory(TCHAR *entry)
 
 					ReleaseMutex(g_hQSharedListMutex);
 				}
-				QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"ListMutex, AddToURLHistory");
 
 				ReleaseMutex(g_hQSharedMemoryMutex);
 			}
-			QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"MemoryMutex, AddToURLHistory");
 		}
 	} // End OPTION_SaveAddressHistory
 }
@@ -5288,11 +5244,9 @@ void CQToolbar::DeleteFromURLHistory(TCHAR *entry)
 
 			ReleaseMutex(g_hQSharedListMutex);
 		}
-		QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"ListMutex, DeleteFromURLHistory");
 
 		ReleaseMutex(g_hQSharedMemoryMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"MemoryMutex, DeleteFromURLHistory");
 }
 
 void CQToolbar::ClearHistory()
@@ -5341,11 +5295,9 @@ void CQToolbar::ClearHistory()
 
 			ReleaseMutex(g_hQSharedListMutex);
 		}
-		QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"ListMutex, ClearHistory");
 
 		ReleaseMutex(g_hQSharedMemoryMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"MemoryMutex, ClearHistory");
 
 	// Free last history entries of other Quero instances
 	UpdateQueroInstances(UPDATE_FREELASTHISTORYENTRY);
@@ -5417,11 +5369,9 @@ int CQToolbar::AddToWhiteList(TCHAR* entry,USHORT permits,bool or_permits)
 
 				ReleaseMutex(g_hQSharedListMutex);
 			}
-			QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"ListMutex, AddToWhiteList");
 
 			ReleaseMutex(g_hQSharedMemoryMutex);
 		}
-		QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"MemoryMutex, AddToWhiteList");
 	}
 
 	return result;
@@ -5466,11 +5416,9 @@ int CQToolbar::DeleteFromWhiteList(TCHAR* entry)
 
 			ReleaseMutex(g_hQSharedListMutex);
 		}
-		QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"ListMutex, DeleteFromWhiteList");
 
 		ReleaseMutex(g_hQSharedMemoryMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"MemoryMutex, DeleteFromWhiteList");
 
 	return result;
 }
@@ -5499,11 +5447,9 @@ void CQToolbar::ResetWhiteList()
 
 			ReleaseMutex(g_hQSharedListMutex);
 		}
-		QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"ListMutex, ResetWhiteList");
 
 		ReleaseMutex(g_hQSharedMemoryMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"MemoryMutex, ResetWhiteList");
 }
 
 void CQToolbar::AddToBlockedContent(BYTE Type,TCHAR *ContentURL,TCHAR *BaseURL,bool Synchronize)
@@ -5514,9 +5460,6 @@ void CQToolbar::AddToBlockedContent(BYTE Type,TCHAR *ContentURL,TCHAR *BaseURL,b
 	{
 		trim(ContentURL);
 
-		QDEBUG_CODE int bIsWindow=::IsWindow(m_hWnd);
-		QDEBUG_PRINT(L"AddToBlockedContent URL",ContentURL);
-		QDEBUG_PRINTF(L"AddToBlockedContent BlockedContentIndex",L"%d",BlockedContentIndex);
 
 		if(BlockedContentIndex<BLOCKEDCONTENTSIZE && ContentURL[0])
 		{
@@ -5552,7 +5495,6 @@ void CQToolbar::AddToBlockedContent(BYTE Type,TCHAR *ContentURL,TCHAR *BaseURL,b
 
 		if(Synchronize) ReleaseMutex(g_hQSharedDataMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"AddToBlockedContent");
 }
 
 void CQToolbar::SetContentBlocked()
@@ -5574,7 +5516,6 @@ void CQToolbar::ResetBlockedContent()
 			ContentBlocked=false;
 			ReleaseMutex(g_hQSharedDataMutex);		
 		}
-		QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"ResetBlockedContent");
 
 		UpdateEmbedButtons(false,true);
 	}
@@ -5662,7 +5603,6 @@ void CQToolbar::OnContentBlockedButtonClick(POINT *point,RECT *rcExclude)
 
 			ReleaseMutex(g_hQSharedDataMutex);
 		}
-		QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"OnContentBlockedButtonClick");
 
 		hBlockedContentMenu=CreatePopupMenu();
 		if(hBlockedContentMenu)
@@ -6087,8 +6027,6 @@ void CQToolbar::OnNewWindow3(IDispatch **ppDisp,VARIANT_BOOL *pCancel,DWORD dwFl
 	bool bAllowPopUp=false;
 	FILETIME now,diff;
 
-	QD(L"OnNewWindow3");
-	QDEBUG_PRINTF(L"OnNewWindow3",L"%x %s",dwFlags,bstrUrl);
 
 	CoFileTimeNow(&now);
 
@@ -6358,7 +6296,6 @@ void CQToolbar::MakeAbsoluteURL(TCHAR *AbsoluteURL,TCHAR *URL,TCHAR *BaseURL)
 		if(UrlCombine(BaseURL,URL,AbsoluteURL,&len,0)!=S_OK)
 		{
 			AbsoluteURL[0]=0;
-			QDEBUG_PRINTF(L"MakeAbsolute failed",L"%s %s",BaseURL,URL);
 		}
 	}
 }
@@ -6474,7 +6411,6 @@ bool CQToolbar::CheckIDN(TCHAR *url_decoded,int hoststartidx,int hostendidx,int 
 
 					if(SHGetValue(HKEY_LOCAL_MACHINE,L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\FontLink\\SystemLink",fIconTitleFont.lfFaceName,&type,FontNames,&size)==ERROR_SUCCESS)
 					{
-						QDEBUG_PRINT(L"CheckIDN",L"Trying Font Linking");
 
 						pFontName=FontNames;
 						i=0;
@@ -6513,7 +6449,6 @@ bool CQToolbar::CheckIDN(TCHAR *url_decoded,int hoststartidx,int hostendidx,int 
 
 										if(HasMissingGlyphs(hDC,pHost+ScriptItems[i].iCharPos,ScriptItems[i+1].iCharPos-ScriptItems[i].iCharPos)==false) // According to MSDN a terminal item ScriptItems[cItems] is available
 										{
-											QDEBUG_PRINTF(L"CheckIDN",L"font #%d for item #%d ok",j,i);
 											break;
 										}
 										j++;
@@ -6521,7 +6456,6 @@ bool CQToolbar::CheckIDN(TCHAR *url_decoded,int hoststartidx,int hostendidx,int 
 
 									if(j>cFonts)
 									{
-										QDEBUG_PRINTF(L"CheckIDN",L"no font match for item #%d ok",i);
 										break;
 									}
 
@@ -6690,7 +6624,6 @@ int CQToolbar::GetWhiteListIndex(WhiteListEntry *pWhiteList,UINT *pWhiteListInde
 		}
 		if(Synchronize) ReleaseMutex(g_hQSharedListMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"GetWhiteListIndex");
 
 	return result;
 }
@@ -6734,7 +6667,6 @@ USHORT CQToolbar::GetWhiteListPermits(TCHAR *url,TCHAR *host,int hostlen)
 
 			ReleaseMutex(g_hQSharedListMutex);
 		}
-		QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"GetWhiteListPermits");
 	}
 
 	return Permits;
@@ -6941,7 +6873,6 @@ bool CQToolbar::IsAdURL(TCHAR *ContentURL,TCHAR *BaseURL,BYTE context)
 
 			if((ch==L'\0' && chFilterPattern==L'\0') || chFilterPattern==L'*')
 			{
-				QDEBUG_PRINT(L"Label match",Labels[i]);
 				return true;
 			}
 			else if(ch<chFilterPattern) break; // URL_FilterLabels alphabetically sorted
@@ -7001,7 +6932,6 @@ bool CQToolbar::IsAdURL(TCHAR *ContentURL,TCHAR *BaseURL,BYTE context)
 					ImgWidth=StrToInt(ImageSize);
 					ImgHeight=StrToInt(ImageSize+4);
 
-					QDEBUG_PRINTF(L"Size parsed",L"%d %d,%d %s",i,ImgWidth,ImgHeight,ContentURL);
 
 					if(IsAdImageSize(ImgWidth,ImgHeight)) return true;
 				}
@@ -8063,7 +7993,6 @@ bool CQToolbar::IsFocusOnInput(IHTMLDocument2 *pHtmlDocument)
 		
 		ElementType=GetElementType(pHtmlElement);
 
-		QDEBUG_PRINTF(L"IsFocusOnInput",L"0x%x",ElementType);
 
 		if(ElementType&(ELEMENT_TYPE_INPUT|ELEMENT_TYPE_TEXTAREA|ELEMENT_TYPE_SELECT|ELEMENT_TYPE_APPLET|ELEMENT_TYPE_OBJECT|ELEMENT_TYPE_EMBED))
 		{
@@ -8105,7 +8034,6 @@ bool CQToolbar::IsFocusOnInput(IHTMLDocument2 *pHtmlDocument)
 
 			if(result==false && SUCCEEDED_OK(pHtmlElement->QueryInterface(IID_IElementBehavior,(LPVOID*)&pElementBehavior)))
 			{
-				QDEBUG_PRINT(L"IsFocusOnInput:",L"DHTML behavior");
 				pElementBehavior->Release();
 				result=true;
 			}
@@ -8154,7 +8082,6 @@ int CQToolbar::GetElementType(IHTMLElement *pHtmlElement)
 	hr=pHtmlElement->get_tagName(&tagName);
 	if(SUCCEEDED_OK(hr) && tagName)
 	{
-		QDEBUG_PRINT(L"GetElementType",tagName);
 
 		const static TCHAR *TagNames[N_ELEMENT_TYPES]={L"input",L"textarea",L"select",L"applet",L"object",L"embed",L"frame",L"iframe"};
 
@@ -8171,7 +8098,6 @@ int CQToolbar::GetElementType(IHTMLElement *pHtmlElement)
 	else
 	{
 		ElementType=ELEMENT_TYPE_UNKNOWN;
-		QDEBUG_PRINT(L"GetElementType",L"failed");
 	}
 
 	return ElementType;
@@ -8203,7 +8129,6 @@ IHTMLDocument2* CQToolbar::GetFrameDocument(int ElementType,IHTMLElement *pHtmlE
 			}
 			pBrowserFrame->Release();
 		}
-		QDEBUG_CODE else QDEBUG_PRINT(L"GetFrameDocument",L"get IWebBrowser2 of active frame failed");
 		pFrameElement->Release();
 	}
 
@@ -8234,7 +8159,6 @@ void CQToolbar::IEFrame_Changed()
 	HWND hwnd_old_IEFrame;
 	HWND hwnd_new_IEFrame;
 
-	QD(L"IEFrame_Changed");
 	if(QueroInstanceId!=UNASSIGNED_INSTANCE_ID)
 	{
 		hwnd_old_IEFrame=QThreadLocalStg[QueroInstanceId].hIEWnd;
@@ -8271,7 +8195,6 @@ void CQToolbar::IEFrame_Changed()
 				
 				ReleaseMutex(g_hQSharedDataMutex);
 			}
-			QDEBUG_CODE else QDEBUG_PRINTF(L"SyncError",L"instance %d %s",QueroInstanceId,L"~IEFrame_Changed");
 		} // End hwnd_old_IEFrame!=hwnd_new_IEFrame
 	}
 }
@@ -8595,7 +8518,6 @@ HRESULT CQToolbar::BlockObject(IHTMLDocument2* pHtmlDocument,TCHAR* pClassId,TCH
 							hr=pObjectElement->get_data(&bstrSource);
 							if(SUCCEEDED_OK(hr) && bstrSource)
 							{
-								QDEBUG_PRINT(L"object data src",bstrSource);
 								StringCbCopy(ContentURL,sizeof ContentURL,bstrSource);								
 								SysFreeString(bstrSource);
 							}
@@ -8639,7 +8561,6 @@ HRESULT CQToolbar::BlockObject(IHTMLDocument2* pHtmlDocument,TCHAR* pClassId,TCH
 																{
 																	if(bstrSource[0]!=L'\0')
 																	{
-																		QDEBUG_PRINT(L"object param name=movie|src",bstrSource);
 																		StringCbCopy(ContentURL,sizeof ContentURL,bstrSource);
 																		j=m; // break
 																	}
@@ -9464,7 +9385,6 @@ bool CQToolbar::IsPopUpMenuVisible()
 			if(!StrCmp(ClassName,L"#32768") || !StrCmp(ClassName,L"BaseBar")) // BaseBar: Favorites menu,toolbar chevron menu
 			{
 				bPopUpMenuVisible=true;
-				QDEBUG_PRINT(L"IsPopUpMenuVisible",L"true");
 			}
 		}
 	}

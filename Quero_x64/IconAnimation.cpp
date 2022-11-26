@@ -118,7 +118,6 @@ DWORD WINAPI CIconAnimation::IconAnimationThread(LPVOID lpParameter)
 					}
 					ReleaseMutex(pIconAnimation->hIconAnimationMutex);
 				} // End animation mutex
-				QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"IconAnimationThread");
 			} // End while ActiveAnimations
 			pIconAnimation->bAnimating=false;
 			pIconAnimation->m_pToolbar->m_ComboQuero.Invalidate(FALSE);
@@ -178,7 +177,6 @@ HDC CIconAnimation::GetDC_RotatingDisk(HDC hDC)
 			}
 			ReleaseMutex(hIconAnimationMutex);
 		}
-		QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"GetDC_RotatingDisk");
 	}
 
 	return hDC_RotatingDisk;
@@ -206,7 +204,6 @@ void CIconAnimation::Stop(BYTE Animation,bool wait)
 	if(wait)
 	{
 		if(WaitForSingleObject(hIconAnimationMutex,SEARCH_MUTEX_TIMEOUT)==WAIT_OBJECT_0) ReleaseMutex(hIconAnimationMutex);
-		QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"StopIconAnimation");
 	}
 }
 
@@ -222,7 +219,6 @@ void CIconAnimation::AbortThread()
 		if(WaitForSingleObject(hIconAnimationThread,SEARCH_MUTEX_TIMEOUT)!=WAIT_OBJECT_0)
 		{
 			TerminateThread(hIconAnimationThread,0);
-			QDEBUG_PRINT(L"SyncError",L"AbortThread");
 		}
 
 		CloseHandle(hIconAnimationThread);

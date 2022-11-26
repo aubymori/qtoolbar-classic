@@ -36,13 +36,7 @@
     <ClCompile Include="IDNA.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="LogoToolbar.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="MenuIcon.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="NavBar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="OLEDataObject.cpp">
@@ -57,9 +51,6 @@
     <ClCompile Include="Profiles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="QDebug.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="QEditCtrl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -70,9 +61,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="QueroBand.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="QueroFilter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RedirectRequest.cpp">
@@ -132,6 +120,9 @@
     <ClCompile Include="UIZoomFactor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="QueroFilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Quero.def">
@@ -179,13 +170,7 @@
     <ClInclude Include="IDNA.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="LogoToolbar.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="MenuIcon.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="NavBar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="OLEDataObject.h">
@@ -200,9 +185,6 @@
     <ClInclude Include="Profiles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="QDebug.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="QEditCtrl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -213,9 +195,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="QueroBand.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="QueroFilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RedirectRequest.h">
@@ -336,6 +315,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="atlwinx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="QueroFilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

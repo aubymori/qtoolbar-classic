@@ -46,27 +46,9 @@ QTOOLBAR.GIF            HTML    MOVEABLE PURE   "qtoolbar.gif"
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_QUERO               ICON    DISCARDABLE     "button_quero.ico"
-IDI_QUERO_WHITE         ICON    DISCARDABLE     "button_quero_white.ico"
-IDI_NAV_BACK            ICON    DISCARDABLE     "nav_back.ico"
-IDI_NAV_BACK_HOT        ICON    DISCARDABLE     "nav_back_hot.ico"
-IDI_NAV_BACK_DISABLED   ICON    DISCARDABLE     "nav_back_disabled.ico"
-IDI_NAV_FORWARD         ICON    DISCARDABLE     "nav_forward.ico"
-IDI_NAV_FORWARD_HOT     ICON    DISCARDABLE     "nav_forward_hot.ico"
-IDI_NAV_FORWARD_DISABLED ICON    DISCARDABLE     "nav_forward_disabled.ico"
-IDI_NAV_REFRESH         ICON    DISCARDABLE     "nav_refresh.ico"
-IDI_NAV_REFRESH_HOT     ICON    DISCARDABLE     "nav_refresh_hot.ico"
-IDI_NAV_STOP            ICON    DISCARDABLE     "nav_stop.ico"
-IDI_NAV_STOP_HOT        ICON    DISCARDABLE     "nav_stop_hot.ico"
-IDI_NAV_HOME            ICON    DISCARDABLE     "nav_home.ico"
-IDI_NAV_HOME_HOT        ICON    DISCARDABLE     "nav_home_hot.ico"
 IDI_SEARCH              ICON    DISCARDABLE     "icon_search.ico"
 IDI_SEARCH_NOTFOUND     ICON    DISCARDABLE     "icon_search_notfound.ico"
 IDI_URL                 ICON    DISCARDABLE     "icon_url.ico"
-IDI_BIN                 ICON    DISCARDABLE     "icon_bin.ico"
-IDI_IDN                 ICON    DISCARDABLE     "icon_idn.ico"
-IDI_123                 ICON    DISCARDABLE     "icon_123.ico"
-IDI_LOCK                ICON    DISCARDABLE     "icon_lock.ico"
 IDI_BUTTON_GO           ICON    DISCARDABLE     "button_go.ico"
 IDI_BUTTON_GO_HOT       ICON    DISCARDABLE     "button_go_hot.ico"
 
@@ -75,7 +57,6 @@ IDI_BUTTON_GO_HOT       ICON    DISCARDABLE     "button_go_hot.ico"
 // Bitmap
 //
 
-IDB_SHIELD              BITMAP  DISCARDABLE     "shield.bmp"
 #endif    // Neutral (Default) resources
 /////////////////////////////////////////////////////////////////////////////
 

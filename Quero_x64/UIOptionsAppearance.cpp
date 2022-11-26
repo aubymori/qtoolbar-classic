@@ -302,5 +302,4 @@ void CUIOptionsAppearance::CopyQueroThemeFileName()
 
 		ReleaseMutex(g_hQSharedDataMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"CopyQueroThemeFileName");
 }

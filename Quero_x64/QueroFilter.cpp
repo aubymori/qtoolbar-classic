@@ -123,35 +123,8 @@ STDMETHODIMP CQueroFilter::Start(LPCWSTR szUrl,IInternetProtocolSink *pIProtSink
 				}
 				else
 				{
-					QDEBUG_PRINT(L"pIBindInfo->GetBindString",L"failed");
 					BaseURL[0]=L'\0';
 				}
-
-				// Get the associated Quero Toolbar
-
-				QDEBUG_CODE IServiceProvider *pServiceProvider;
-				QDEBUG_CODE IWindowForBindingUI *pWindowForBindingUI;
-				QDEBUG_CODE HWND hIEWnd;
-
-				QDEBUG_CODE	if(SUCCEEDED_OK(pIProtSink->QueryInterface(IID_IServiceProvider,(LPVOID*)&pServiceProvider)))
-				QDEBUG_CODE	{
-				QDEBUG_CODE		if(SUCCEEDED_OK(pServiceProvider->QueryService(IID_IWindowForBindingUI,IID_IWindowForBindingUI,(LPVOID*)&pWindowForBindingUI)))
-				QDEBUG_CODE		{
-				QDEBUG_CODE			if(SUCCEEDED_OK(pWindowForBindingUI->GetWindow(IID_IHttpSecurity,&hIEWnd)))
-				QDEBUG_CODE			{
-				QDEBUG_CODE				//DWORD ThreadId;
-							
-				QDEBUG_CODE				//ThreadId=GetWindowThreadProcessId(hIEWnd,NULL);
-
-				QDEBUG_CODE				//QDEBUG_PRINTF(L"GetWindowThreadProcessId",L"thread [%x]",ThreadId);
-				QDEBUG_CODE			}
-				QDEBUG_CODE			else QD(L"GetWindow failed");
-				QDEBUG_CODE			pWindowForBindingUI->Release();
-
-				QDEBUG_CODE		}
-				QDEBUG_CODE		else QD(L"QueryService failed");
-				QDEBUG_CODE		pServiceProvider->Release();
-				QDEBUG_CODE	} else QD(L"QueryInterface failed");
 
 				if(WaitForSingleObject(g_hQSharedDataMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
 				{
@@ -167,7 +140,6 @@ STDMETHODIMP CQueroFilter::Start(LPCWSTR szUrl,IInternetProtocolSink *pIProtSink
 					else
 					{
 						// Workaround: get first Quero instance
-						QDEBUG_PRINT(L"CQueroFilter::Start",L"GetFirstQueroInstance");
 						pQueroInstance=GetFirstQueroInstance();
 						if(pQueroInstance)
 						{
@@ -177,7 +149,6 @@ STDMETHODIMP CQueroFilter::Start(LPCWSTR szUrl,IInternetProtocolSink *pIProtSink
 
 					ReleaseMutex(g_hQSharedDataMutex);
 				}
-				QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"CQueroFilter::Start");
 			}
 
 			m_grfPI=grfPI;
@@ -246,7 +217,6 @@ STDMETHODIMP CQueroFilter::Read(void *pv, ULONG cb, ULONG *pcbRead)
 
 			if(hr==INET_E_DATA_NOT_AVAILABLE && cbBuffer)
 			{
-				QDEBUG_PRINTF(L"CQueroFilter",L"INET_E_DATA_NOT_AVAILABLE pcb=%d",*pcbRead);
 				*pcbRead=0;
 				hr=S_OK;
 			}
@@ -418,7 +388,6 @@ STDMETHODIMP CQueroFilter::Read(void *pv, ULONG cb, ULONG *pcbRead)
 														OverwriteString(pTagStart,"<!--  ");
 														OverwriteString(pHtmlData-5,"   -->");
 													}
-													QD(L"AddToBlockedContent 6");
 													m_pToolbar->AddToBlockedContent(BLOCKED_CONTENT_BANNER,ContentURL,BaseURL,true);
 												}
 											}
@@ -465,7 +434,6 @@ STDMETHODIMP CQueroFilter::Read(void *pv, ULONG cb, ULONG *pcbRead)
 													OverwriteString(pTagStart,"<!--  ");
 													OverwriteString(pHtmlData-5,"   -->");
 												}
-												QD(L"AddToBlockedContent 7");
 												m_pToolbar->AddToBlockedContent(BLOCKED_CONTENT_FLASH,ContentURL,BaseURL,true);
 											}
 										}
@@ -563,7 +531,6 @@ STDMETHODIMP CQueroFilter::Read(void *pv, ULONG cb, ULONG *pcbRead)
 
 										if(AttrParsed==(ATTR_NAME|ATTR_VALUE))
 										{
-											QD(L"AddToBlockedContent 8");
 											m_pToolbar->AddToBlockedContent(BLOCKED_CONTENT_FLASH,ContentURL,BaseURL,true);
 										}
 									}
@@ -584,7 +551,6 @@ STDMETHODIMP CQueroFilter::Read(void *pv, ULONG cb, ULONG *pcbRead)
 													OverwriteString(pTagStart,"<!--");
 													InsideContent|=INSIDE_ADSCRIPT;
 												}
-												QD(L"AddToBlockedContent 9");
 												m_pToolbar->AddToBlockedContent(BLOCKED_CONTENT_ADSCRIPT,attr_buffer,NULL,true);
 											}
 										}
@@ -644,7 +610,6 @@ STDMETHODIMP CQueroFilter::Read(void *pv, ULONG cb, ULONG *pcbRead)
 						len=(int)(pHtmlData-pTagStart);
 						if(len>=TAG_SIZE)
 						{
-							QDEBUG_PRINTA(L"CQueroFilter: tag too large",pTagStart);
 
 							if(NotInsideScript())
 							{
@@ -682,8 +647,6 @@ STDMETHODIMP CQueroFilter::Read(void *pv, ULONG cb, ULONG *pcbRead)
 					{						
 						if(pTagStart)
 						{					
-							QDEBUG_PRINTA(L"CQueroFilter: state=neutral, pTagStart!=0",pTagStart);
-							QDEBUG_PRINTF(L"CQueroFilter",L"hr=%x; oldstate=%d, cbBuffer=%d",hr,oldstate,cbBuffer);
 						}
 						*pcbRead=cb;
 						hr=S_OK;

@@ -30,11 +30,8 @@
 #include <mshtml.h>
 #include <time.h>
 #include <strsafe.h>
-#include "QDebug.h"
 #include "ComboQuero.h"
 #include "ComboEngine.h"
-#include "NavBar.h"
-#include "LogoToolbar.h"
 #include "ButtonBar.h"
 #include "AutoComplete.h"
 #include "Profiles.h"
@@ -867,9 +864,7 @@ public:
 	// Getter/Setter methods
 	inline CComboQuero* GetComboQuero() {return &m_ComboQuero;};
 	inline CComboEngine* GetComboEngine() {return &m_ComboEngine;};
-	inline CNavBar* GetNavBar() {return &m_NavBar;};
 	inline CButtonBar* GetButtonBar() {return &m_ButtonBar;};
-	inline CLogoToolbar* GetLogoToolbar() {return &m_LogoToolbar;};
 	inline CQueroBand* GetBand() { return m_pBand; }
 	inline void SetBand(CQueroBand* pBand) {m_pBand=pBand;}
 	inline IWebBrowser2* GetBrowser() { return m_pBrowser; }
@@ -1117,10 +1112,6 @@ public:
 	// Pointers to the QueroBand and the browser
 	CQueroBand* m_pBand;
 	IWebBrowser2* m_pBrowser;
-
-	// Embedded controls
-	CNavBar m_NavBar;
-	CLogoToolbar m_LogoToolbar;
 	CButtonBar m_ButtonBar;
 	CComboQuero m_ComboQuero;
 	CIconAnimation m_IconAnimation;

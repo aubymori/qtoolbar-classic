@@ -91,7 +91,6 @@ LRESULT CUIWhiteList::OnInitDialog(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL
 
 		ReleaseMutex(g_hQSharedListMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"OnInitDialog");
 
 	// Init DialogResize
 	DlgResize_Init();
@@ -192,7 +191,6 @@ SHORT CUIWhiteList::GetWhiteListPermits(TCHAR pattern[MAXURLLENGTH])
 
 		ReleaseMutex(g_hQSharedListMutex);
 	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"GetWhieListPermits");
 
 	return Permits;
 }
