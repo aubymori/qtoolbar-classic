@@ -660,11 +660,9 @@ void CQToolbar::InitFontAndHeight()
 	SystemParametersInfo(SPI_GETICONTITLELOGFONT,sizeof(LOGFONT),&f,0);
 
 	//QDEBUG_PRINTF(L"font size",L"%d %d -> %d",f.lfHeight,g_FontSize,CalculatePxHeight(f.lfHeight-g_FontSize));
-
-	f.lfHeight-=g_FontSize;
 	
 	// Minimum height of toolbar is 22 pixels
-	if(CalculatePxHeight(f.lfHeight)<16) f.lfHeight=CalculateFontHeight(16);
+	f.lfHeight=CalculateFontHeight(16);
 	
 	hFont=CreateFontIndirect(&f);
 
@@ -679,10 +677,10 @@ void CQToolbar::InitFontAndHeight()
 		GetTextMetrics(hDC,&tm);
 		SelectObject(hDC,hOldFont);
 
-		ItemHeight=tm.tmHeight+4;
+		ItemHeight=tm.tmHeight;
 		//QDEBUG_PRINTF(L"textmetric",L"%d %d %d",tm.tmHeight,tm.tmInternalLeading,tm.tmExternalLeading);
 	}
-	else ItemHeight=CalculatePxHeight(f.lfHeight)+1;
+	else ItemHeight=CalculatePxHeight(f.lfHeight);
 
 	// Make item height even
 	if(ItemHeight%2) ItemHeight--;
@@ -691,9 +689,9 @@ void CQToolbar::InitFontAndHeight()
 	if(ItemHeight<18)
 	{
 		ItemHeight=18;
-		Padding_Top=3;
+		Padding_Top=1;
 	}
-	else Padding_Top=2;
+	else Padding_Top=1;
 
 	// Set margin between items
 	Margin_Items=2;
@@ -1143,7 +1141,7 @@ int CQToolbar::GetToolbarHeight()
 
 	if((g_Options2&OPTION2_ShowSearchBox) || (g_Options&OPTION_ShowSearchEngineComboBox) ||
 	 m_ButtonBar.HasVisibleButtons())	
-		height=ItemHeight+6+GetToolbarPadding()*2;
+		height=ItemHeight+GetToolbarPadding()*2;
 	else
 		height=0;
 
@@ -1166,7 +1164,7 @@ int CQToolbar::GetToolbarPadding()
 
 	if(buttonheight>20)
 	{
-		padding=(buttonheight-g_Scaled_ButtonSize+1)/2+(g_Scaled_PaddingY==PADDINGY_UNKNOWN?3:g_Scaled_PaddingY); // Minimum search box height is 22px
+		padding=(buttonheight-g_Scaled_ButtonSize+1)/(g_Scaled_PaddingY==PADDINGY_UNKNOWN?3:g_Scaled_PaddingY); // Minimum search box height is 22px
 	}
 	else if(g_Scaled_PaddingY==PADDINGY_UNKNOWN)
 	{
@@ -1175,7 +1173,7 @@ int CQToolbar::GetToolbarPadding()
 	else padding=g_Scaled_PaddingY;
 
 	if(IsWindows8OrLater()) padding--;
-	else if(g_IE_MajorVersion>=9 && (g_Options2&OPTION2_EnableAeroTheme)) padding-=2;
+	else if(g_IE_MajorVersion>=9 && (g_Options2&OPTION2_EnableAeroTheme)) padding-=5;
 
 	if(padding<0) padding=0;
 		
@@ -1280,7 +1278,7 @@ LRESULT CQToolbar::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandle
 		wndRect.top=GetToolbarPadding();
 
 
-		wndRect.bottom+=100;
+		//wndRect.bottom=10;
 
 		// Calculate the dimensions of the Quero combo box
 		wndRect.left+=1;

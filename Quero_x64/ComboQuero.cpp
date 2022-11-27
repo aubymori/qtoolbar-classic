@@ -87,7 +87,6 @@ HWND CComboQuero::Create(HWND hWndParent, RECT& rcPos, LPCTSTR szWindowName, DWO
 {
 	HWND hWnd;
 	int i;
-
 	hWnd=CWindowImpl<CComboQuero>::Create(hWndParent,rcPos,szWindowName,dwStyle,dwExStyle,nID);
 
 	UpdateComboBoxInfo();
@@ -147,7 +146,7 @@ void CComboQuero::OnHeightChange(int height)
 {
 	// Set the height of the combo box and list items
 	::SendMessage(m_hWnd,CB_SETITEMHEIGHT,(WPARAM)-1,height);
-	::SendMessage(m_hWnd,CB_SETITEMHEIGHT,0,height+m_pToolbar->Margin_Items);
+	::SendMessage(m_hWnd,CB_SETITEMHEIGHT,0,height);
 
 	// Update the dimensions of the combo box
 	UpdateComboBoxInfo();
@@ -520,8 +519,7 @@ LRESULT CComboQuero::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 			// Highlight IDN if focus is not in the edit box
 			if(GetFocus()!=m_hWndEdit && bHighlightIDN==false)
 			{
-				bHighlightIDN=true;
-				SetTextCurrentURL();
+				bHighlightIDN=false;
 				m_Edit.ShowWindow(SW_HIDE);
 			}
 		}
@@ -787,11 +785,11 @@ LRESULT CComboQuero::OnClickDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 				m_Edit.ShowWindow(SW_SHOW);
 			}
 		}
-		else if(bHighlightIDN==false)
+		else if(bHighlightIDN)
 		{
 			TRACKMOUSEEVENT me;
 			
-			bHighlightIDN=true;
+			bHighlightIDN=false;
 			
 			me.cbSize=sizeof(TRACKMOUSEEVENT);
 			me.hwndTrack=m_hWnd;
@@ -799,7 +797,7 @@ LRESULT CComboQuero::OnClickDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 			TrackMouseEvent(&me);
 
 			m_pBand->FocusChange(FALSE);
-			SetText(m_pToolbar->currentURL,TYPE_ADDRESS,m_pToolbar->GetFavIcon(),true);
+			//SetText(m_pToolbar->currentURL,TYPE_ADDRESS,m_pToolbar->GetFavIcon(),true);
 			m_Edit.ShowWindow(SW_HIDE);
 		}
 		break;

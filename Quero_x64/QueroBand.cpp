@@ -222,7 +222,7 @@ STDMETHODIMP CQueroBand::GetBandInfo(DWORD dwBandID, DWORD dwViewMode, DESKBANDI
 		{
 			pdbi->ptActual.x = toolbarminwidth;
 			if(g_Options2&OPTION2_ShowSearchBox) pdbi->ptActual.x<<=1;
-			pdbi->ptActual.y = 22;
+			pdbi->ptActual.y = toolbarheight;
 		}
 		if(pdbi->dwMask & DBIM_TITLE)
 		{
@@ -1197,87 +1197,7 @@ bool CQueroBand::InstallContextMenu(bool install)
 		}
 	}
 
-/*
-	// Overriding ShowContextMenu
-	if(WaitForSingleObject(g_hQSharedDataMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-	{
-		if(install!=g_ContextMenuInstalled)
-		{
-			if(m_pWebBrowser2)
-			{
-				hr=m_pWebBrowser2->get_Document(&pDispatch);
-				if(SUCCEEDED_OK(hr) && pDispatch)
-				{
-					// If this is not an HTML document (e.g., it's a Word doc or a PDF), don't sink.
-					IHTMLDocument2 *pHtmlDocument=NULL;
-					hr=pDispatch->QueryInterface(IID_IHTMLDocument2,(LPVOID*)&pHtmlDocument);
-					if(SUCCEEDED_OK(hr) && pHtmlDocument)
-					{
-						// Get pointer to default interface
-						IOleObject *pOleObject=NULL;
-						hr=pDispatch->QueryInterface(IID_IOleObject,(LPVOID*)&pOleObject);
-						if(SUCCEEDED_OK(hr) && pOleObject)
-						{
-							IOleClientSite *pClientSite=NULL;
-							hr = pOleObject->GetClientSite(&pClientSite);
-							if(SUCCEEDED_OK(hr) && pClientSite)
-							{
-								hr=pClientSite->QueryInterface(IID_IDocHostUIHandler,(LPVOID*)&pUIHandler);
-								
-								pClientSite->Release();
-							}
-							pOleObject->Release();
-						}		
-						pHtmlDocument->Release();
-					}
-					pDispatch->Release();
-				}
-			}
-			else hr=E_FAIL;
-
-			if(SUCCEEDED_OK(hr) && pUIHandler)
-			{
-				// Modifying the vtbl of IDocHostUIHandler
-
-				ULONG_PTR *pVtbl;
-				ULONG_PTR *pShow;
-				DWORD op, op2;
-
-				pVtbl=(ULONG_PTR*)*(ULONG_PTR*)pUIHandler; // The first dword/qword is the address of the vtbl
-				pShow=pVtbl+3; // Offset to ShowContextMenu method
-				
-				if(VirtualProtect(pShow, sizeof(ULONG_PTR), PAGE_READWRITE, &op))
-				{
-					if(ORIG_DOCHOSTUIHANDLER_SHOWCTXMENU==NULL) ORIG_DOCHOSTUIHANDLER_SHOWCTXMENU=(FP_DOCHOSTUIHANDLER_SHOWCTXMENU)*pShow;
-					if(install) *pShow=(ULONG_PTR)DocHostUIHandler_ShowContextMenu;
-					else if(*pShow==(ULONG_PTR)DocHostUIHandler_ShowContextMenu) *pShow=(ULONG_PTR)ORIG_DOCHOSTUIHANDLER_SHOWCTXMENU;
-
-					VirtualProtect(pShow, sizeof(ULONG_PTR), op, &op2);
-					g_ContextMenuInstalled=install;
-					result=true;
-				}
-
-				pUIHandler->Release();
-			}
-		}
-		else result=true;
-
-		ReleaseMutex(g_hQSharedDataMutex);
-	}
-	QDEBUG_CODE else QDEBUG_PRINT(L"SyncError",L"InstallContextMenu");
-*/
-
 	return result;
-}
-
-bool CQueroBand::IsPopUpBlockerInstalled()
-{
-	return g_PopUpBlockerInstalled;
-}
-
-bool CQueroBand::IsAdBlockerInstalled()
-{
-	return g_AdBlockerInstalled;
 }
 
 bool CQueroBand::IsContextMenuInstalled()
