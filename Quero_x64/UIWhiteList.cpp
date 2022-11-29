@@ -147,28 +147,6 @@ SHORT CUIWhiteList::GetSelectedPermits()
 	return permits;
 }
 
-bool CUIWhiteList::GetPattern(TCHAR pattern[MAXURLLENGTH])
-{
-	CIDNA idna;
-	int status;
-	size_t url_len;
-	int hoststartidx,hostendidx;
-
-	m_Domain.GetWindowText(pattern,MAXURLLENGTH);
-	m_pToolbar->trim(pattern);
-	CharLower(pattern);
-	url_len=MAXURLLENGTH;
-	status=idna.URLToAscii(pattern,&url_len,NULL,NULL,NULL);
-	if((status&IDNA_ILLEGAL)==0)
-	{
-		url_len=MAXURLLENGTH;
-		status=idna.URLToUnicode(pattern,&url_len,&hoststartidx,&hostendidx,NULL);
-		if(hoststartidx || hostendidx!=(int)(url_len)) return false;
-	}
-
-	return (status&IDNA_ILLEGAL)==0;
-}
-
 SHORT CUIWhiteList::GetWhiteListPermits(TCHAR pattern[MAXURLLENGTH])
 {
 	SHORT Permits=0;
@@ -205,56 +183,8 @@ LRESULT CUIWhiteList::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& b
 	switch(LOWORD(wParam))
 	{
 	case IDC_ADD:
-		if(GetPattern(Pattern))
-		{
-			permits=GetSelectedPermits();
-			lvIndex=m_pToolbar->AddToWhiteList(Pattern,permits,false);
-			
-			if(lvIndex!=-1)
-			{
-				LVFINDINFO fi;
-
-				fi.flags=LVFI_STRING;
-				fi.psz=Pattern;
-
-				lvIndex=m_WhiteList.FindItem(&fi,-1);
-
-				if(lvIndex==-1)	lvIndex=m_WhiteList.InsertItem(m_WhiteList.GetItemCount(),Pattern);
-
-				m_Domain.SetWindowText(Pattern);
-				SetAllowSubItems(lvIndex,permits);
-
-				// Select the entry in the list view
-				bProcessNotifications=false;
-				m_WhiteList.SetItemState(lvIndex,LVNI_SELECTED|LVNI_FOCUSED,LVNI_SELECTED|LVNI_FOCUSED);
-				m_WhiteList.EnsureVisible(lvIndex,FALSE);
-				m_WhiteList.SetFocus();
-				bProcessNotifications=true;
-			}
-		}
-		else ErrorMsgId=IDS_ERR_WL_PATTERNINVALID;
 		break;
 	case IDC_DELETE:
-		if(GetPattern(Pattern))
-		{
-			lvIndex=m_pToolbar->DeleteFromWhiteList(Pattern);
-			
-			if(lvIndex!=-1)
-			{
-				LVFINDINFO fi;
-
-				fi.flags=LVFI_STRING;
-				fi.psz=Pattern;
-
-				lvIndex=m_WhiteList.FindItem(&fi,-1);
-				if(lvIndex!=-1) m_WhiteList.DeleteItem(lvIndex);
-
-				m_Domain.SetWindowText(L"");
-				SetAllowCheckboxes(0);
-			}
-			else ErrorMsgId=IDS_ERR_WL_PATTERNNOTFOUND;
-		}
-		else ErrorMsgId=IDS_ERR_WL_PATTERNINVALID;
 		break;
 	case IDC_SELECT_ALL:
 		if(HIWORD(wParam)==BN_CLICKED)

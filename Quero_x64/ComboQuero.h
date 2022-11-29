@@ -67,14 +67,16 @@ public:
 		MESSAGE_HANDLER(WM_RBUTTONDOWN, OnClickDown)
 		MESSAGE_HANDLER(WM_RBUTTONDBLCLK, OnClickDown)
 		MESSAGE_HANDLER(WM_RBUTTONUP, OnClickUp)
-		MESSAGE_HANDLER(WM_CTLCOLOREDIT , OnCtlColorEdit)
+		MESSAGE_HANDLER(WM_CTLCOLOREDIT, OnCtlColorEdit)
 		MESSAGE_HANDLER(WM_NOTIFY, OnNotify)
+		//MESSAGE_HANDLER(WM_SIZE, OnSize)
 	END_MSG_MAP()
 
 // Handler prototypes:
 //  LRESULT MessageHandler(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 //  LRESULT CommandHandler(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 //  LRESULT NotifyHandler(int idCtrl, LPNMHDR pnmh, BOOL& bHandled);
+	LRESULT OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnMouseWheel(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
@@ -122,6 +124,8 @@ private:
 	HBITMAP hEditBckgrndBitmap; // Background bitmap for the pattern brush
 	CQueroBand *m_pBand;
 	CQToolbar *m_pToolbar;
+
+	HWND hWnd;
 
 	static WNDPROC ORIG_ListWndProc;
 	static LRESULT CALLBACK ListWndProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);

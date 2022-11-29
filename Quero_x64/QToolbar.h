@@ -35,7 +35,6 @@
 #include "ButtonBar.h"
 #include "AutoComplete.h"
 #include "Profiles.h"
-#include "IDNA.h"
 #include "IconAnimation.h"
 #include "RedirectRequest.h"
 #ifdef COMPILE_FOR_WINDOWS_VISTA
@@ -43,6 +42,7 @@
 #endif
 
 #include "..\QueroBroker\QueroBroker.h"
+
 
 // Quero version
 
@@ -924,7 +924,6 @@ public:
 	void DrawItemComboQuero(HDC hDC,DRAWITEMSTRUCT *pItem);
 	void DrawItemComboEngine(HDC hDC,DRAWITEMSTRUCT *pItem);
 	void DrawItemIcon(HDC hDC,RECT *pRect,HICON hIcon,HBRUSH hBrush,int Offset,bool bDrawLoadingAnimation);
-	void DrawIDN(HDC hDC,RECT Rect);
 	void DrawComboQueroIcon();
 	HDC GetToolbarBckgrndMemDC();
 	inline HBITMAP GetToolbarBckgrndBitmap() { return hToolbarBckgrndBitmap; }
@@ -1013,7 +1012,6 @@ public:
 	BYTE SetCurrentURL(TCHAR *url);
 	int URLToAscii(TCHAR *url);
 	int URLToUnicode(TCHAR *url,int *HostStartIndex,int *HostEndIndex,int *DomainStartIndex);
-	inline CIDNA* GetIDNA() { return &m_IDNA; }
 	bool IsStartPageURL(TCHAR *url);
 	void CopyCurrentCoreDomain(TCHAR *pCoreDomain);
 	void AppendCurrentAddress(TCHAR *pQueryWithAddress,TCHAR *pOriginalQuery,UINT iRequiresAddress);
@@ -1222,7 +1220,6 @@ public:
 	int DomainStartIndexAscii;
 	BYTE SpecialCharsInURL;
 	int Certificate_Organization_Extent;
-	CIDNA m_IDNA;
 
 	// Before navigation URL
 	TCHAR beforeURL[MAXURLLENGTH];

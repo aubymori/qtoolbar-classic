@@ -24,8 +24,9 @@
 #ifndef __REDIRECTREQUEST_H
 #define __REDIRECTREQUEST_H
 
-#include "IDNA.h"
 #include <strsafe.h>
+
+#define MAXURLLENGTH 2048
 
 class CRedirectRequest  
 {

@@ -78,7 +78,6 @@ public:
 	void SetAllowSubItems(int index,SHORT permits);
 	void SetAllowCheckboxes(SHORT permits);
 	SHORT GetSelectedPermits();
-	bool GetPattern(TCHAR pattern[MAXURLLENGTH]);
 	SHORT GetWhiteListPermits(TCHAR pattern[MAXURLLENGTH]);
 
 	CEdit m_Domain;

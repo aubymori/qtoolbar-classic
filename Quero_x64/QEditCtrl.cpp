@@ -714,42 +714,6 @@ int CQEditCtrl::InitDragDropData(FORMATETC fmtetc[MAX_DRAGDROP_FORMATS],STGMEDIU
 			StringCchCopyN(selection,MAXURLLENGTH,bstrTemp+SelStart,SelLength);
 			SysFreeString(bstrTemp);
 
-			// Determine which clipboard formats to initialize
-
-			AddressType=m_pToolbar->GetIDNA()->IsAddress(selection);
-			if(AddressType)
-			{
-				if(AddressType&ADDRESS_URL_WITHOUT_SCHEME) AddressType=ADDRESS_NONE;
-				else if(AddressType&(ADDRESS_PATH|ADDRESS_DRIVE))
-				{
-					DWORD len=MAXURLLENGTH;
-					if(FAILED(UrlCreateFromPath(selection,AsciiURL,&len,NULL))) AddressType=ADDRESS_NONE;
-					else StringCbCopy(selection,sizeof selection,AsciiURL);
-				}
-				else if(m_pToolbar->GetIDNA()->IsInternetURL(selection))
-				{
-					CIDNA idna;
-					size_t url_len;
-					int status;
-
-					StringCbCopy(AsciiURL,sizeof AsciiURL,selection);
-					url_len=MAXURLLENGTH;
-					status=idna.URLToAscii(AsciiURL,&url_len,NULL,NULL,NULL);
-					if(status&IDNA_ILLEGAL) AddressType=ADDRESS_NONE;
-				}
-				else StringCbCopy(AsciiURL,sizeof AsciiURL,selection);
-			}
-			if(AddressType)
-			{			
-				bIsURL=true;
-				nDragDropFormats=7;
-			}
-			else
-			{
-				bIsURL=false;
-				nDragDropFormats=2;
-			}
-
 			// Initilize fmtetc and storage media
 
 			i=0;

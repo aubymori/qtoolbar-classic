@@ -82,10 +82,8 @@ void CComboQuero::SubclassListWnd()
 	if(ORIG_ListWndProc==NULL) ORIG_ListWndProc=(WNDPROC)::GetWindowLongPtr(m_hWndList,GWLP_WNDPROC);
 	::SetWindowLongPtr(m_hWndList,GWLP_WNDPROC,(LONG_PTR)ListWndProc);
 }
-
 HWND CComboQuero::Create(HWND hWndParent, RECT& rcPos, LPCTSTR szWindowName, DWORD dwStyle, DWORD dwExStyle, UINT nID)
 {
-	HWND hWnd;
 	int i;
 	hWnd=CWindowImpl<CComboQuero>::Create(hWndParent,rcPos,szWindowName,dwStyle,dwExStyle,nID);
 
@@ -349,22 +347,6 @@ STDMETHODIMP CComboQuero::TranslateAcceleratorIO(LPMSG lpMsg)
 					// Delete entry from Quero history
 					m_pToolbar->DeleteFromHistory(bstrQuery);
 					m_pToolbar->DeleteFromURLHistory(bstrQuery);
-
-					// Delete entry from IE URL history
-					if(m_pToolbar->GetIDNA()->IsAddress(bstrQuery))
-					{
-						IUrlHistoryStg* pUrlHistoryStg;
-						HRESULT hr;
-
-						pUrlHistoryStg=NULL;
-						hr = CoCreateInstance(CLSID_CUrlHistory,NULL,CLSCTX_INPROC_SERVER, IID_IUrlHistoryStg,(LPVOID*)&pUrlHistoryStg);
-						if(SUCCEEDED_OK(hr))
-						{
-							pUrlHistoryStg->DeleteUrl(bstrQuery,0);
-							pUrlHistoryStg->Release();
-						}
-					}
-
 					SysFreeString(bstrQuery);
 				}
 				SetText(L"",TYPE_SEARCH,NULL,false);
@@ -669,13 +651,6 @@ LRESULT CComboQuero::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 				// Update state
 				bCurrentURLDisplayed=false;
 				bTextChanged=true;
-				// Set type
-				m_pToolbar->SetCurrentType(((g_Options2&OPTION2_AddressNavigation) && m_pToolbar->GetIDNA()->IsAddress(bstrQuero))?TYPE_ADDRESS:TYPE_SEARCH,NULL);
-				// Perform QuickSearch
-				if((g_Options&OPTION_EnableQuickFind) || bstrQuero[0]==L'/')
-				{
-					m_pToolbar->QuickFind(pPhrase);
-				}
 			}
 			else bIgnoreChange=false;
 

@@ -1132,11 +1132,6 @@ void DecodeHtmlEntities(TCHAR *pHtml)
 
 							// Write codepoint
 							pEntity=Entity;
-							CIDNA::EncodeUTF16(cp,&pEntity);
-							// Append unprocessed part of the entity
-							j=IsUTF16BMP(cp)?1:2;
-							while(i<EntityLen) Entity[j++]=Entity[i++];
-							EntityLen=j;
 							bEntitiyDecoded=true;
 						}
 					}

@@ -325,7 +325,6 @@ echo Warning : Cannot register Unicode DLL on Windows 95
     <ClCompile Include="ComboEngine.cpp" />
     <ClCompile Include="ComboQuero.cpp" />
     <ClCompile Include="IconAnimation.cpp" />
-    <ClCompile Include="IDNA.cpp" />
     <ClCompile Include="MenuIcon.cpp" />
     <ClCompile Include="OLEDataObject.cpp" />
     <ClCompile Include="OLEDropSource.cpp" />
@@ -422,7 +421,6 @@ echo Warning : Cannot register Unicode DLL on Windows 95
     <ClInclude Include="ComboEngine.h" />
     <ClInclude Include="ComboQuero.h" />
     <ClInclude Include="IconAnimation.h" />
-    <ClInclude Include="IDNA.h" />
     <ClInclude Include="MenuIcon.h" />
     <ClInclude Include="OLEDataObject.h" />
     <ClInclude Include="OLEDropSource.h" />

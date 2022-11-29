@@ -423,21 +423,6 @@ bool CProfiles::IsLuckyURL(TCHAR *pURL,TCHAR pInterceptedSearchTerms[MAXURLLENGT
 			}
 			else break;
 		}
-		if(*pURL==L'\0' && *pLuckyURL==L'\0' && bParamPresent)
-		{
-			CIDNA idna;
-			TCHAR url[MAXURLLENGTH];
-			size_t url_len;
-			int HostEndIndex;
-
-			// Check if LuckyURL is valid and not of the form "http://www.{searchTerms}.com/"
-			StringCbCopy(url,sizeof url,CurrentProfile.LuckySearch.QueryURL);
-			url_len=MAXURLLENGTH;
-			if((idna.URLToUnicode(url,&url_len,NULL,&HostEndIndex,NULL)&IDNA_ILLEGAL)==0)
-			{
-				result=InterceptSearchTerms(pOldURL,true,&CurrentProfile.LuckySearch,pInterceptedSearchTerms);
-			}
-		}
 	}
 
 	return result;
@@ -516,7 +501,6 @@ bool CProfiles::LoadEngine(HKEY hKeyProfile,int EngineId,SearchEngine *pEngine)
 		DWORD type;
 		TCHAR data[MAXURLLENGTH];
 		DWORD size;
-		CIDNA idna;
 		size_t url_len;
 		int HostEndIndex;
 		int i;
@@ -567,20 +551,6 @@ bool CProfiles::LoadEngine(HKEY hKeyProfile,int EngineId,SearchEngine *pEngine)
 					if(type==REG_SZ)
 					{
 						pEngine->QueryURL=SysAllocString(data);
-						// Extract InterceptURL
-						if(idna.IsInternetURL(data))
-						{
-							url_len=MAXURLLENGTH;
-							if((idna.URLToUnicode(data,&url_len,NULL,&HostEndIndex,NULL)&IDNA_ILLEGAL)==0)
-							{
-								if(HostEndIndex<MAXURLLENGTH-1)
-								{
-									data[HostEndIndex]='/';
-									data[HostEndIndex+1]=0;
-									pEngine->InterceptURL=SysAllocString(data);
-								}
-							}
-						}
 					}
 					break;
 				case SEARCHENGINE_VALUES_LINK:
@@ -1448,7 +1418,6 @@ void CProfiles::PrepareNavigation(TCHAR *pQuery,SearchEngine *pEngine,BSTR *pbst
 	UINT param_count_without_adress;
 	UINT i;
 	size_t query_length;
-	CIDNA idna;
 	size_t size;
 	int HostStartIndex;
 	int HostEndIndex;
@@ -1495,17 +1464,6 @@ void CProfiles::PrepareNavigation(TCHAR *pQuery,SearchEngine *pEngine,BSTR *pbst
 		while(i<N_ENCODINGS && LOWORD(pEngine->Flags)!=Encoding_CodePages[i]) i++;
 		if(i<N_ENCODINGS) pInputEncoding=Encoding_CharSetNames[i];
 		else pInputEncoding=L"";
-
-		if(LOWORD(pEngine->Flags)==CODEPAGE_UTF8)
-		{
-			pQueryEncoded=idna.EncodeUTF8(pQuery,query_length);
-			for(i=0;i<ParamCount;i++) pParamsEncoded[i]=idna.EncodeUTF8(Params[i]);
-		}
-		else
-		{
-			pQueryEncoded=idna.EncodeHex(pQuery,query_length,LOWORD(pEngine->Flags));
-			for(i=0;i<ParamCount;i++) pParamsEncoded[i]=idna.EncodeHex(Params[i],LOWORD(pEngine->Flags));
-		}
 	}
 	else // pQuery == NULL
 	{
@@ -1532,23 +1490,6 @@ void CProfiles::PrepareNavigation(TCHAR *pQuery,SearchEngine *pEngine,BSTR *pbst
 	if(pEngine->iRequiresAddress)
 	{
 		size=MAXURLLENGTH;
-		if((idna.URLToUnicode(url,&size,&HostStartIndex,&HostEndIndex,&DomainStartIndex)&IDNA_ILLEGAL)==0)
-		{
-			if(LOWORD(pEngine->Flags)==CODEPAGE_UTF8)
-			{
-				pQueroParamsEncoded[QUERO_PARAMS_URL]=idna.EncodeUTF8(url);
-				url[HostEndIndex]=0;
-				pQueroParamsEncoded[QUERO_PARAMS_HOSTNAME]=idna.EncodeUTF8(url+HostStartIndex);
-				pQueroParamsEncoded[QUERO_PARAMS_DOMAINNAME]=idna.EncodeUTF8(url+DomainStartIndex);
-			}
-			else
-			{
-				pQueroParamsEncoded[QUERO_PARAMS_URL]=idna.EncodeHex(url,LOWORD(pEngine->Flags));
-				url[HostEndIndex]=0;
-				pQueroParamsEncoded[QUERO_PARAMS_HOSTNAME]=idna.EncodeHex(url+HostStartIndex,LOWORD(pEngine->Flags));
-				pQueroParamsEncoded[QUERO_PARAMS_DOMAINNAME]=idna.EncodeHex(url+DomainStartIndex,LOWORD(pEngine->Flags));
-			}
-		}
 	}
 
 	// Build Query
@@ -1749,7 +1690,6 @@ bool CProfiles::InterceptSearchTerms(TCHAR *pQuery,bool bIsURL,SearchEngine *pEn
 	TCHAR ch;
 	bool bInsideValue;
 	bool bInsideQuery;
-	CIDNA idna;
 
 	for(i=0;i<pEngine->ParamCount;i++) Params[i][0]=0;
 
@@ -1827,9 +1767,6 @@ bool CProfiles::InterceptSearchTerms(TCHAR *pQuery,bool bIsURL,SearchEngine *pEn
 	i=0;
 	while(i<pEngine->ParamCount)
 	{
-		if(LOWORD(pEngine->Flags)==CODEPAGE_UTF8) idna.DecodeUTF8(Params[i]);
-		else idna.DecodeHex(Params[i],LOWORD(pEngine->Flags));
-
 		CQToolbar::trim(Params[i]);
 		if(Params[i][0]) result=true;
 

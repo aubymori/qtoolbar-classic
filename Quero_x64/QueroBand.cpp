@@ -1354,8 +1354,7 @@ HRESULT STDMETHODCALLTYPE DocHostUIHandler_ShowContextMenu(IDocHostUIHandler __R
 													CMenuIcon EngineIcons[MAX_ENGINES];
 													#endif
 
-													if(pToolbar->GetIDNA()->IsAddress(selection)) g_EnableCtxMenuGo=true;
-													else g_EnableCtxMenuGo=false;
+													g_EnableCtxMenuGo=false;
 
 													g_QueroCtxMenu=CreateMenu();
 													for(i=0;i<pToolbar->nengines;i++)

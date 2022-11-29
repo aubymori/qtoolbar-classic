@@ -689,9 +689,9 @@ void CQToolbar::InitFontAndHeight()
 	if(ItemHeight<18)
 	{
 		ItemHeight=18;
-		Padding_Top=1;
+		Padding_Top=2;
 	}
-	else Padding_Top=1;
+	else Padding_Top=2;
 
 	// Set margin between items
 	Margin_Items=2;
@@ -1141,7 +1141,7 @@ int CQToolbar::GetToolbarHeight()
 
 	if((g_Options2&OPTION2_ShowSearchBox) || (g_Options&OPTION_ShowSearchEngineComboBox) ||
 	 m_ButtonBar.HasVisibleButtons())	
-		height=ItemHeight+GetToolbarPadding()*2;
+		height=ItemHeight+4+GetToolbarPadding()*2;
 	else
 		height=0;
 
@@ -1275,14 +1275,12 @@ LRESULT CQToolbar::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandle
 		else end=wndRect.right;
 
 		// Add padding, if navigation buttons are present
-		wndRect.top=GetToolbarPadding();
+		wndRect.top=0;
 
-
-		//wndRect.bottom=10;
 
 		// Calculate the dimensions of the Quero combo box
-		wndRect.left+=1;
-		if((g_Options2&OPTION2_ShowSearchBox) || (g_Options&OPTION_ShowSearchEngineComboBox)) wndRect.left+=LOGOGAP;
+		wndRect.left=0;
+		if((g_Options2&OPTION2_ShowSearchBox) || (g_Options&OPTION_ShowSearchEngineComboBox)) wndRect.left=0;
 		if(g_Options2&OPTION2_ShowSearchBox)
 		{	
 			if(g_Options&OPTION_ShowSearchEngineComboBox)
@@ -1322,7 +1320,7 @@ LRESULT CQToolbar::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandle
 			wndRect.right=end;
 		}
 		m_ComboEngine.MoveWindow(&wndRect,TRUE);
-
+		::SendMessage(m_ComboEngine.m_hWnd, CB_SETITEMHEIGHT, -1, 18);
 		// Update the dimensions of the Engine combo box
 		m_ComboEngine.UpdateComboBoxInfo();
 		
@@ -2903,32 +2901,15 @@ void CQToolbar::Quero(TCHAR *pQuery, BYTE type, BYTE options, UINT newWinTab, in
 				// Determine type
 				if(type==TYPE_UNKNOWN)
 				{
-					if(pQuery || currentType==TYPE_UNKNOWN)
-					{
-						if(len) type=((g_Options2&OPTION2_AddressNavigation) && m_IDNA.IsAddress(pNewQuery))?TYPE_ADDRESS:TYPE_SEARCH;
-						else go2hp=true;
-					}
-					else
-					{
 						if(len && m_ComboQuero.bIsEmptySearch==false) type=(g_Options2&OPTION2_AddressNavigation)?currentType:TYPE_SEARCH;
 						else go2hp=true;
-					}
 				}
 
 				// Address
 				if(type==TYPE_ADDRESS)
 				{
 					// Prefix "http://" if scheme is omitted and address is an IPv6 address or port number is present
-					UINT AddressType=m_IDNA.IsAddress(pNewQuery);
-					if((AddressType&ADDRESS_URL_WITHOUT_SCHEME) && (AddressType&(ADDRESS_IPV6|ADDRESS_PORT_PRESENT)))
-					{
-						TCHAR HTTP_URL[MAXURLLENGTH];
-
-						StringCbCopy(HTTP_URL,sizeof HTTP_URL,L"http://");
-						StringCbCat(HTTP_URL,sizeof HTTP_URL,pNewQuery);
-						bstrURL=SysAllocString(HTTP_URL);
-					}
-					else bstrURL=SysAllocString(pNewQuery);
+					bstrURL=SysAllocString(pNewQuery);
 					type=TYPE_ADDRESS;
 					pEngine=NULL;
 				}
@@ -2999,26 +2980,6 @@ void CQToolbar::Quero(TCHAR *pQuery, BYTE type, BYTE options, UINT newWinTab, in
 		// Navigate
 		if(bstrURL)
 		{
-			// URLtoASCII
-			if(g_IDNSupport && (m_IDNA.IsInternetURL(bstrURL) || (m_IDNA.IsAddress(bstrURL)&ADDRESS_URL_WITHOUT_SCHEME)))
-			{
-				int status;
-				TCHAR AsciiURL[MAXURLLENGTH];		
-
-				StringCbCopy(AsciiURL,sizeof AsciiURL,bstrURL);
-				
-				SysFreeString(bstrURL);
-				
-				status=URLToAscii(AsciiURL);
-				if(status&IDNA_ILLEGAL)
-				{
-					if(pQuery==NULL) m_ComboQuero.SetFocus();
-					else if(g_ShowURL && currentURL[0]) m_ComboQuero.SetTextCurrentURL();
-					bstrURL=NULL;
-				}
-				else bstrURL=SysAllocString(AsciiURL);
-			}
-
 			if(bstrURL)
 			{
 				// Have the Web browser navigate to the site URL requested depending on user input
@@ -3101,134 +3062,6 @@ UINT CQToolbar::SplitIntoWords(TCHAR *str,TCHAR Words[MAXWORDS][MAXWORDLENGTH],B
 	bool bInsideQuotes;
 
 	n=0;
-
-	if(str && !m_IDNA.IsAddress(str))
-	{
-		// Trim phrase
-		trim(str);
-
-		// Reformat phrase and add it on the first position
-
-		if(options&INITWORDS_IncludeWholePhrase)
-		{
-			StringCbCopy(Words[0],sizeof Words[0],str);
-
-			pStr=Words[0];
-			bInsideQuotes=false;
-		
-			if(*pStr==L'+' || *pStr==L'-')
-			{
-				*pStr=L' ';
-				pStr++;
-			}
-
-			while(*pStr!=L'\0') 
-			{
-				if(*pStr==L'"')
-				{
-					*pStr=L' ';
-					bInsideQuotes=!bInsideQuotes;
-				}
-				else if(_istspace(*pStr) && (!bInsideQuotes && (pStr[1]==L'+' || pStr[1]==L'-')))
-				{
-					pStr++;
-					*pStr=L' ';
-				}
-				
-				pStr++;
-			}
-
-			trim(Words[0]);	
-			if(*Words[0]) n++;
-		}
-
-		// Split Words
-
-		bInsideQuotes=false;
-		pStr=str;
-
-		while(n<MaxWords && *pStr!=L'\0')
-		{
-			i=0;
-			
-			while(_istspace(*pStr) || (_istpunct(*pStr) && !bInsideQuotes))
-			{
-				if(*pStr==L'"') bInsideQuotes=!bInsideQuotes;
-				pStr++;
-			}
-
-			while(*pStr!=L'\0')
-			{
-				if(bInsideQuotes)
-				{
-					if(*pStr==L'"' || *pStr==L'*')
-					{
-						if(*pStr==L'"') bInsideQuotes=false;
-						pStr++;
-						break;
-					}
-				}
-				else
-				{
-					if(_istspace(*pStr) || _istpunct(*pStr))
-					{
-						pStr++;
-						break;
-					}
-				}
-				if(i<MAXWORDLENGTH-1) Words[n][i++]=*pStr;
-				pStr++;
-			}
-
-			if(i && _istspace(Words[n][i-1])) i--;
-			
-			Words[n][i]=L'\0';
-			if(i) n++;
-		}
-
-		// If there was only one word extracted compare it with the whole phrase and remove it if identical
-
-		if(options&INITWORDS_IncludeWholePhrase)
-		{
-			if(n==2 && StrCmp(Words[0],Words[1])==0) n=1;
-		}
-		
-		// Add bigrams to the list of words
-
-		if(options&INITWORDS_Bigrams)
-		{
-			i=(options&INITWORDS_IncludeWholePhrase)?1:0;
-
-			if(n>=(3+i))
-			{
-				j=n;
-				while(i<n-1 && j<MaxWords)
-				{
-					k=0;
-					while(Words[i][k]!=_T('\0'))
-					{
-						Words[j][k]=Words[i][k];
-						k++;
-					}
-					Words[j][k++]=_T(' ');
-					i++;
-					l=0;
-					while(Words[i][l]!=_T('\0') && k<MAXWORDLENGTH)
-					{
-						Words[j][k]=Words[i][l];
-						l++;
-						k++;
-					}
-					if(k<MAXWORDLENGTH)
-					{
-						Words[j][k]=_T('\0');
-						j++;
-					}
-				}
-				n=j;
-			}
-		}
-	}
 
 	return n;
 }
@@ -3713,12 +3546,6 @@ void CQToolbar::DrawItemComboQuero(HDC hDC,DRAWITEMSTRUCT *pItem)
 
 			i++;
 		}
-
-		// IDN Highlighting
-		if(m_ComboQuero.bHighlightIDN || PreviewIDN || (SpecialCharsInURL && IsWindowsVistaOrLater()))
-		{
-			DrawIDN(hDC,pItem->rcItem);
-		}
 	}
 	else // Drawing takes place in the drop-down list
 	{
@@ -3829,313 +3656,6 @@ void CQToolbar::DrawItemComboQuero(HDC hDC,DRAWITEMSTRUCT *pItem)
 			format=DT_TOP|DT_SINGLELINE|DT_NOPREFIX;
 			if(bDrawDescription) format|=DT_END_ELLIPSIS;
 			DrawText(hDC,buffer,(int)len,&pItem->rcItem,format);
-		}
-	}
-}
-
-void CQToolbar::DrawIDN(HDC hDC,RECT Rect)
-{
-	const static COLORREF HighlightColors[10]={0x7D7DFF,0x69FFFD,0x69FF69,0xFDFF69,0xFF69FD,0xFFCA91,0x69B0FF,0xC1FF69,0xFFC0B9,0xC0CAD0};
-	char CharSetColor[NUCCHARSETS_NAMES];
-	HBRUSH hBrush;
-	int a,b,i,n;
-	int color;
-	int CharSetA,CharSetB;
-	long maxx,offset;
-	bool hasChars;
-	TCHAR url[MAXURLLENGTH];
-	TCHAR *pSourceURL,*pTargetURL,*pURL;
-	int hoststartidx,hostendidx;
-	DWORD cp;
-	const TCHAR *CharSetNames[NUCCHARSETS_NAMES];
-	char CharSetNamesColor[NUCCHARSETS_NAMES];
-	LONG CharSetNamesExtent[NUCCHARSETS_NAMES];
-	LONG TotalCharSetNamesExtent;
-	SIZE size;
-	size_t len;
-#ifndef COMPILE_FOR_WIN9X
-	SCRIPT_STRING_ANALYSIS ssa,ssa_out;
-	int dxa,dxb;
-#endif
-
-	if(PreviewIDN)
-	{
-		pSourceURL=beforeURL;
-		hoststartidx=BeforeHostStartIndex;
-		hostendidx=BeforeHostEndIndex;
-	}
-	else
-	{
-		pSourceURL=currentURL;
-		hoststartidx=HostStartIndex;
-		hostendidx=HostEndIndex;
-	}
-
-	// Add spaces before and after combining marks to make them visible
-	pTargetURL=url;
-	b=hostendidx;
-	pURL=pSourceURL;
-	while(*pURL && pURL<(pSourceURL+b) && pTargetURL<(url+MAXURLLENGTH-5)) // Spare 5 chars (traling 0, 2 spaces, surrogate pair)
-	{
-		cp=m_IDNA.DecodeUTF16(&pURL);
-		if(m_IDNA.GetCanonicalClass(cp)) // Insert spaces
-		{
-			*pTargetURL=L' ';
-			pTargetURL++;
-			m_IDNA.EncodeUTF16(cp,&pTargetURL);
-			pTargetURL++;
-			*pTargetURL=L' ';
-			hostendidx+=2;
-		}
-		else m_IDNA.EncodeUTF16(cp,&pTargetURL);
-
-		pURL++;
-		pTargetURL++;
-	}
-	while(*pURL && pTargetURL<(url+MAXURLLENGTH-1))
-	{
-		*pTargetURL=*pURL;
-		pTargetURL++;
-		pURL++;
-	}
-	*pTargetURL=0;
-
-
-	for(a=0;a<NUCCHARSETS_NAMES;a++) CharSetColor[a]=-1;
-
-	Rect.top+=Padding_Top;
-	Rect.left+=QEDITCTRL_LEFTMARGIN+m_ComboQuero.GetEditCtrlMargin(); // Add left margin of edit control
-	if(SecureLockIcon_Quero && Certificate_Organization_Extent) Rect.left+=Certificate_Organization_Extent+m_ComboQuero.GetEditCtrlMargin()+SPACING_CERTIFICATE_ORGANIZATION_EDITCTRL;
-	Rect.bottom--;
-
-	color=0;
-	SelectObject(hDC,hFont);
-
-	offset=Rect.left;
-	maxx=Rect.right-GetEmbedButtonsTotalWidth();
-
-	a=b=0;
-	CharSetA=-1;
-	CharSetB=-1;
-
-	//GetTextExtentExPoint(hDC,url,hostendidx,maxx,&nFit,dx,&size);
-
-#ifdef COMPILE_FOR_WIN9X
-	if(url[b] && hostendidx) hasChars=true;
-	else hasChars=false;
-
-	while(hasChars && b<=hostendidx && Rect.left<maxx)
-	{
-		if(url[b])
-		{
-			if(b<hoststartidx || b>=hostendidx || (url[b]>=L'a' && url[b]<=L'z') || url[b]==L'.' || url[b]==L':') CharSetB=-1;
-			else CharSetB=m_IDNA.GetCharSet(url[b]);
-		}
-		else hasChars=false;
-
-		if(CharSetA!=CharSetB || b>=hostendidx || !hasChars)
-		{
-			if(a<b)
-			{
-				GetTextExtentPoint32(hDC,url+a,b-a,&size);
-				Rect.right=Rect.left+size.cx;
-				if(Rect.right>maxx) Rect.right=maxx;
-
-				if(CharSetA!=-1)
-				{
-					if(CharSetColor[CharSetA]==-1)
-					{
-						if(CharSetA<2 || CharSetA==CHARSET_NONSTDASCII) CharSetColor[CharSetA]=9;
-						else
-						{
-							CharSetColor[CharSetA]=color++;
-							color=color%10;
-						}
-					}
-					hBrush=CreateSolidBrush(HighlightColors[CharSetColor[CharSetA]]);
-					if(hBrush)
-					{
-						::FillRect(hDC,&Rect,hBrush);
-						DeleteObject(hBrush);
-					}
-					SetTextColor(hDC,0x000000);
-				}
-				else SetTextColor(hDC,Colors[COLOR_Link]);
-							
-				DrawText(hDC,url+a,b-a,&Rect,DT_TOP|DT_SINGLELINE|DT_NOPREFIX);
-
-				Rect.left=Rect.right;
-			}
-
-			a=b;
-			CharSetA=CharSetB;
-		}
-		b++;
-	}
-#else
-	pURL=url;
-
-	if(*pURL && hostendidx && ScriptStringAnalyse(hDC,url,hostendidx+1,hostendidx*2+16,-1,SSA_GLYPHS|SSA_FALLBACK|SSA_LINK,maxx,NULL,NULL,NULL,NULL,NULL,&ssa)==S_OK)
-	{
-		hasChars=true;
-		while(hasChars && b<=hostendidx && Rect.left<maxx)
-		{
-			cp=*pURL;
-			if(cp)
-			{
-				if(b<hoststartidx || b>=hostendidx || (cp>=L'a' && cp<=L'z') || cp==L'.' || cp==L':')
-				{
-					CharSetB=-1;
-				}
-				else
-				{
-					if(cp==L' ') // Get CharSet of combining mark, skip blanks
-					{
-						pURL++;
-						cp=m_IDNA.DecodeUTF16(&pURL);
-						pURL++;
-					}
-					else cp=m_IDNA.DecodeUTF16(&pURL);
-
-					CharSetB=m_IDNA.GetCharSet(cp);
-				}
-			}
-			else hasChars=false;
-
-			if(CharSetA!=CharSetB || b>=hostendidx || !hasChars)
-			{
-				if(a<b)
-				{
-					ScriptStringCPtoX(ssa,a,FALSE,&dxa);
-					ScriptStringCPtoX(ssa,b-1,TRUE,&dxb);
-					if(dxa<=dxb)
-					{
-						Rect.left=dxa+offset;
-						Rect.right=dxb+offset;
-					}
-					else
-					{
-						Rect.left=dxb+offset;
-						Rect.right=dxa+offset;
-					}
-					if(Rect.left<maxx)
-					{
-						if(Rect.right>maxx) Rect.right=maxx;
-
-						if(CharSetA!=-1)
-						{
-							if(CharSetColor[CharSetA]==-1)
-							{
-								if(CharSetA<2 || CharSetA==CHARSET_NONSTDASCII) CharSetColor[CharSetA]=9;
-								else
-								{
-									CharSetColor[CharSetA]=color++;
-									color=color%10;
-								}
-							}
-							hBrush=CreateSolidBrush(HighlightColors[CharSetColor[CharSetA]]);
-							if(hBrush)
-							{
-								::FillRect(hDC,&Rect,hBrush);
-								DeleteObject(hBrush);
-							}
-							SetTextColor(hDC,0x000000);
-						}
-						else SetTextColor(hDC,Colors[COLOR_Link]);
-
-						// Output characters
-
-						if(ScriptStringAnalyse(hDC,url+a,b-a,(b-a)*2+16,-1,SSA_GLYPHS|SSA_FALLBACK|SSA_LINK,maxx,NULL,NULL,NULL,NULL,NULL,&ssa_out)==S_OK)
-						{
-							ScriptStringOut(ssa_out,Rect.left,Rect.top,ETO_CLIPPED,&Rect,0,0,FALSE);
-							ScriptStringFree(&ssa_out);
-						}
-								
-						//DrawText(hDC,url+a,b-a,&Rect,DT_TOP|DT_SINGLELINE|DT_NOPREFIX);
-					}
-				}
-
-				a=b;
-				CharSetA=CharSetB;
-			}
-			if(cp==L' ') b+=3;
-			else b++;
-			if(cp>0xFFFF) b++;
-			pURL++;
-		}
-		
-		ScriptStringCPtoX(ssa,a,FALSE,&dxb);
-		Rect.right=offset+dxb;
-
-		ScriptStringFree(&ssa);
-	}
-#endif
-	// Output rest of URL and the character set names that occured in the host name
-
-	if(Rect.right<maxx)
-	{
-		i=0;
-		n=0;
-		TotalCharSetNamesExtent=0;
-		while(i<NUCCHARSETS_NAMES)
-		{
-			if(CharSetColor[i]!=-1)
-			{
-				const TCHAR *CharSetName;
-
-				CharSetName=m_IDNA.GetCharSetName(i);
-				if(CharSetName)
-				{
-					StrCchLen(CharSetName,80,len);
-					GetTextExtentPoint32(hDC,CharSetName,(int)len,&size);
-					CharSetNames[n]=CharSetName;
-					CharSetNamesColor[n]=CharSetColor[i];
-					CharSetNamesExtent[n]=size.cx;
-					TotalCharSetNamesExtent+=size.cx+CHARSETNAMESPACING*2;
-					n++;
-				}
-			}
-			i++;
-		}
-
-		Rect.left=Rect.right;
-		Rect.right=maxx-TotalCharSetNamesExtent-3;
-
-		if(Rect.left<Rect.right && url[a])
-		{
-			SetTextColor(hDC,Colors[COLOR_Link]);
-			DrawText(hDC,url+a,-1,&Rect,DT_TOP|DT_SINGLELINE|DT_NOPREFIX|DT_END_ELLIPSIS);
-		}
-		else Rect.right=Rect.left;
-
-		if(Rect.right+3<maxx)
-		{
-			if((maxx-Rect.right)>=TotalCharSetNamesExtent) Rect.left=maxx-TotalCharSetNamesExtent;
-			else Rect.left=Rect.right+3;
-
-			SetTextColor(hDC,0x000000);
-
-			i=0;
-			while(i<n && Rect.right<maxx)
-			{
-				Rect.right=Rect.left+CharSetNamesExtent[i]+CHARSETNAMESPACING*2;
-
-				if(Rect.right>maxx) Rect.right=maxx;
-
-				hBrush=CreateSolidBrush(HighlightColors[CharSetNamesColor[i]]);
-				if(hBrush)
-				{
-					::FillRect(hDC,&Rect,hBrush);
-					DeleteObject(hBrush);
-				}
-
-				Rect.left+=CHARSETNAMESPACING;
-
-				DrawText(hDC,CharSetNames[i],-1,&Rect,DT_TOP|DT_SINGLELINE|DT_NOPREFIX|DT_END_ELLIPSIS);
-
-				Rect.left=Rect.right;
-				i++;
-			}
 		}
 	}
 }
@@ -5470,11 +4990,6 @@ void CQToolbar::AddToBlockedContent(BYTE Type,TCHAR *ContentURL,TCHAR *BaseURL,b
 			{
 				StringCchCopy(BlockedItem->URL,MAXURLLENGTH,ContentURL);
 			}
-			else
-			{
-				if(BaseURL && m_IDNA.IsInternetURL(BaseURL)) MakeAbsoluteURL(BlockedItem->URL,ContentURL,BaseURL);
-				else MakeAbsoluteURL(BlockedItem->URL,ContentURL,NULL);
-			}
 
 			// Add if not already in blocked content list
 
@@ -5577,7 +5092,6 @@ void CQToolbar::OnContentBlockedButtonClick(POINT *point,RECT *rcExclude)
 
 							QueryStartIndex=0;
 							url_size=MAXURLLENGTH;
-							m_IDNA.URLToUnicode(BlockedContent[i].URL,&url_size,NULL,&QueryStartIndex,NULL);
 							pUrl=(BlockedContent[i].URL)+QueryStartIndex;
 							ch=*pUrl;
 							while(ch && ch!=L'?')
@@ -5635,7 +5149,6 @@ void CQToolbar::OnContentBlockedButtonClick(POINT *point,RECT *rcExclude)
 			AppendMenu(hBlockedContentMenu,g_BlockPopUps&POPUPBLOCKER_Enable?MF_ENABLED|MF_CHECKED|MF_STRING:MF_ENABLED|MF_STRING,ID_BLOCK_POPUPS,GetString(IDS_BLOCKED_MENU_BLOCK_POPUPS));
 			i=MF_STRING;
 			if(bTemporarilyUnblock) i|=MF_CHECKED;
-			i|=(m_IDNA.IsInternetURL(currentURL))?MF_ENABLED:MF_GRAYED;
 			AppendMenu(hBlockedContentMenu,i,ID_TEMP_UNBLOCK,GetString(IDS_BLOCKED_MENU_TEMP_UNBLOCK));
 			AppendMenu(hBlockedContentMenu,MF_ENABLED|MF_STRING,ID_ALLOWED_SITES,GetString(IDS_BLOCKED_MENU_ALLOWED_SITES));
 
@@ -6144,53 +5657,6 @@ BYTE CQToolbar::SetCurrentURL(TCHAR *url) // Returns special character class
 	CoreDomainStartIndex=0;
 	CoreDomainEndIndex=0;
 
-	if(m_IDNA.IsInternetURL(url))
-	{
-		url_size=MAXURLLENGTH;
-		m_IDNA.URLToAscii(currentAsciiURL,&url_size,&HostStartIndexAscii,&HostEndIndexAscii,&DomainStartIndexAscii);
-		IsIPv6=m_IDNA.IsIPv6;
-
-		StringCbCopy(currentURL,sizeof currentURL,currentAsciiURL);
-
-		if(g_IDNSupport)
-		{
-			url_size=MAXURLLENGTH;
-			status=m_IDNA.URLToUnicode(currentURL,&url_size,&HostStartIndex,&HostEndIndex,&DomainStartIndex);
-		}
-		else
-		{
-			HostStartIndex=HostStartIndexAscii;
-			HostEndIndex=HostEndIndexAscii;
-			DomainStartIndex=DomainStartIndexAscii;
-			status=0;
-		}
-
-		CoreDomainStartIndex=DomainStartIndex;
-		CoreDomainEndIndex=HostEndIndex;
-
-		if(status&IDNA_NONASCII)
-			result=SPECIALCHARS_IDN;
-		else if(m_IDNA.IsIPv6==false)
-		{
-			// Check if host name contains digits or non-standard ASCII characters
-			i=HostStartIndex;
-			pCurrentURL=currentURL+i;
-			while(i<HostEndIndex)
-			{
-				ch=*pCurrentURL;
-
-				if(_istdigit(ch) || (!_istalnum(ch) && ch!=L'.' && ch!=L'-'))
-				{
-					result=SPECIALCHARS_ASCII;
-					break;
-				}
-				pCurrentURL++;
-				i++;
-			}
-		}
-	}
-	else
-	{
 		StringCbCopy(currentURL,sizeof currentURL,url);
 
 		// Highlighting the most relevant part of the address
@@ -6202,7 +5668,6 @@ BYTE CQToolbar::SetCurrentURL(TCHAR *url) // Returns special character class
 			i++;
 		}
 		if(i) CoreDomainEndIndex=i;
-	}
 
 	// Calculate start and end extents for domain highlighting
 	MeasureDomainExtents(currentURL,CoreDomainStartIndex,CoreDomainEndIndex,&CoreDomainStartExtent,&CoreDomainEndExtent);
@@ -6231,30 +5696,6 @@ void CQToolbar::MeasureDomainExtents(TCHAR *url,int DomainStartIndex,int DomainE
 			*DomainStartExtent=size.cx;
 			GetTextExtentPoint32(hDC,url,DomainEndIndex,&size);
 			*DomainEndExtent=size.cx;
-		/*
-		#ifndef COMPILE_FOR_WIN9X
-			SCRIPT_STRING_ANALYSIS ssa;
-			int dxa,dxb;
-
-			if(ScriptStringAnalyse(hDC,url,DomainEndIndex+1,DomainEndIndex*2+16,-1,SSA_GLYPHS|SSA_FALLBACK|SSA_LINK,0,NULL,NULL,NULL,NULL,NULL,&ssa)==S_OK)
-			{
-				if(DomainStartIndex) ScriptStringCPtoX(ssa,DomainStartIndex-1,TRUE,&dxa);
-				else dxa=0;
-				ScriptStringCPtoX(ssa,DomainEndIndex,FALSE,&dxb);
-				if(dxa<dxb)
-				{
-					*DomainStartExtent=dxa;
-					*DomainEndExtent=dxb;
-				}
-				else
-				{
-					*DomainStartExtent=dxb;
-					*DomainEndExtent=dxa;
-				}
-				ScriptStringFree(&ssa);
-			}
-		#endif
-		*/
 			m_ComboQuero.GetEditCtrl()->ReleaseDC(hDC);
 		}
 		else *DomainStartExtent=*DomainEndExtent=0;
@@ -6282,9 +5723,6 @@ int CQToolbar::MeasureTextExtent(TCHAR *pText,UINT uiTextLength)
 void CQToolbar::MakeAbsoluteURL(TCHAR *AbsoluteURL,TCHAR *URL,TCHAR *BaseURL)
 {
 	// To do: support base url tag; add parameter IHTMLDocument2, query base url if BaseURL==NULL
-	if(m_IDNA.IsInternetURL(URL)) StringCchCopy(AbsoluteURL,MAXURLLENGTH,URL);
-	else
-	{
 		DWORD len;
 
 		len=MAXURLLENGTH;
@@ -6295,7 +5733,6 @@ void CQToolbar::MakeAbsoluteURL(TCHAR *AbsoluteURL,TCHAR *URL,TCHAR *BaseURL)
 		{
 			AbsoluteURL[0]=0;
 		}
-	}
 }
 
 bool CQToolbar::CheckIDN(TCHAR *url_decoded,int hoststartidx,int hostendidx,int domainstartidx,int idna_status)
@@ -6327,43 +5764,11 @@ bool CQToolbar::CheckIDN(TCHAR *url_decoded,int hoststartidx,int hostendidx,int 
 
 			pURL=pHost;
 
-			while(i<hostendidx)
-			{
-				cp=m_IDNA.DecodeUTF16(&pURL);
-
-				if(IsUnicodeDot(cp)) newlabel=true;
-				else if(cp!=L'-')
-				{
-					NextCharSet=m_IDNA.GetCharSet(cp);
-					if(NextCharSet==CHARSET_LATIN1 || NextCharSet==CHARSET_DIGITS || NextCharSet==CHARSET_NONSTDASCII) NextCharSet=CHARSET_LETTERS; // Treat ASCII and Latin1 as one character set
-
-					if(newlabel)
-					{
-						if(NextCharSet==CHARSET_UNKNOWN || m_IDNA.GetCanonicalClass(NextCharSet)>0) // Label starts with combining mark?
-						{
-							suspicious=true;
-							break;
-						}
-						BaseCharSet=NextCharSet;
-						newlabel=false;
-					}
-					else if(BaseCharSet!=NextCharSet)
-					{
-						suspicious=true;
-						break;
-					}
-				}
-				pURL++;
-				if(cp<0x10000) i++;
-				else i+=2;
-			}
-
 			if(suspicious) if(ShowSecurityWarning(WARNING_DIALOG_IDN,pHost,hostlen,0)) return true;
 		}
 
 		if(g_Warnings&WARNING_ASCIIRULES_VIOLATION)
 		{
-			if(idna_status&IDNA_DOMAIN_VIOLATES_ASCIIRULES) if(ShowSecurityWarning(WARNING_DIALOG_ASCIIRULES_VIOLATION,pHost,hostlen,0)) return true;
 		}
 	}
 
@@ -6392,7 +5797,7 @@ bool CQToolbar::CheckIDN(TCHAR *url_decoded,int hoststartidx,int hostendidx,int 
 				HFONT hFonts[MAX_LINKED_FONTS];
 				int cFonts;
 
-				SCRIPT_ITEM ScriptItems[MAX_HOST_LEN];
+				SCRIPT_ITEM ScriptItems[255];
 				int cItems;
 				int i,j;
 
@@ -6434,7 +5839,7 @@ bool CQToolbar::CheckIDN(TCHAR *url_decoded,int hoststartidx,int hostendidx,int 
 
 						if(cFonts)
 						{
-							if(ScriptItemize(pHost,hostlen,MAX_HOST_LEN,NULL,NULL,ScriptItems,&cItems)==0)
+							if(ScriptItemize(pHost,hostlen,255,NULL,NULL,ScriptItems,&cItems)==0)
 							{
 								i=0;
 								while(i<cItems)
@@ -6487,8 +5892,8 @@ bool CQToolbar::ShowSecurityWarning(int WarningDialog,TCHAR *pHost,int HostLen,i
 	const UINT WarnDesc[4]={IDS_WARN_IDN_DESC,IDS_WARN_ILLEGAL_URL_DESC,IDS_WARN_MISSGLYPHS_DESC,IDS_WARN_ASCIIRULES_VIOLATION_DESC};
 	const SHORT Allow[4]={WL_ALLOW_IDN,0,WL_ALLOW_MISSGLYPHS,WL_ALLOW_IDN};
 
-	TCHAR desc[3*MAX_HOST_LEN];
-	TCHAR host[MAX_HOST_LEN+1];
+	TCHAR desc[3*255];
+	TCHAR host[255+1];
 	size_t url_len;
 	bool result;
 	RECT rect;
@@ -6506,7 +5911,6 @@ bool CQToolbar::ShowSecurityWarning(int WarningDialog,TCHAR *pHost,int HostLen,i
 			StringCbCat(desc,sizeof desc,L"\r\n");
 
 			url_len=MAXURLLENGTH;
-			m_IDNA.URLToAscii(host,&url_len,NULL,NULL,NULL);
 			StringCbCat(desc,sizeof desc,host);
 		}
 		
@@ -6557,7 +5961,7 @@ bool CQToolbar::ShowSecurityWarning(int WarningDialog,TCHAR *pHost,int HostLen,i
 bool CQToolbar::HasMissingGlyphs(HDC hDC,TCHAR *pHost,int len)
 {
 #ifndef COMPILE_FOR_WIN9X
-	WORD glyphs[MAX_HOST_LEN*2];
+	WORD glyphs[255*2];
 	DWORD n;
 	bool missglyphs;
 
@@ -6565,7 +5969,7 @@ bool CQToolbar::HasMissingGlyphs(HDC hDC,TCHAR *pHost,int len)
 
 	n=GetGlyphIndices(hDC,pHost,len,(LPWORD)&glyphs,GGI_MARK_NONEXISTING_GLYPHS);
 
-	if(n!=GDI_ERROR && n<=MAX_HOST_LEN*2)
+	if(n!=GDI_ERROR && n<=255*2)
 	{
 		while(n)
 		{
@@ -6637,15 +6041,7 @@ USHORT CQToolbar::GetWhiteListPermits(TCHAR *url,TCHAR *host,int hostlen)
 
 	if(g_Options&(OPTION_DisableAdBlockerForLocalWebSites|OPTION_DisableAdBlockerForHttpsWebSites))
 	{
-		AddressType=m_IDNA.IsAddress(url);
-		AllowedAddressTypes=0;
-		if(g_Options&OPTION_DisableAdBlockerForLocalWebSites) AllowedAddressTypes=ADDRESS_PATH|ADDRESS_DRIVE|ADDRESS_FILE_URL|ADDRESS_ABOUT|ADDRESS_RESOURCE|ADDRESS_PIDL;
-		if(g_Options&OPTION_DisableAdBlockerForHttpsWebSites) AllowedAddressTypes|=ADDRESS_HTTPS_URL;
 
-		// Let AllowedAddressTypes and exotic URL schemes through
-		if(	(AddressType&AllowedAddressTypes) ||
-			((g_Options&OPTION_DisableAdBlockerForLocalWebSites) && (AddressType&ADDRESS_URL) && m_IDNA.IsInternetURL(url)==false)			
-			) Permits=WL_ALLOW_ALL;
 	}
 
 	if(Permits==0)
@@ -6682,12 +6078,9 @@ UINT CQToolbar::GetWhiteListBlockAds(TCHAR *url)
 		int hoststartidx,hostendidx;
 		int status;
 		size_t url_len;
-		CIDNA idna;
 
 		url_len=MAXURLLENGTH;
-		status=idna.URLToUnicode(url,&url_len,&hoststartidx,&hostendidx,NULL);
-		if((status&IDNA_ILLEGAL)==0) Permits=GetWhiteListPermits(url,url+hoststartidx,hostendidx-hoststartidx);
-		else Permits=0;
+		Permits=0;
 	}
 	else Permits=GetWhiteListPermits(currentURL,currentURL+HostStartIndex,HostEndIndex-HostStartIndex);
 
@@ -6717,12 +6110,9 @@ bool CQToolbar::GetWhiteListBlockPopUps(TCHAR *PopUpURL)
 		int hoststartidx,hostendidx;
 		int status;
 		size_t url_len;
-		CIDNA idna;
 
 		url_len=MAXURLLENGTH;
-		status=idna.URLToUnicode(PopUpURL,&url_len,&hoststartidx,&hostendidx,NULL);
-		if((status&IDNA_ILLEGAL)==0 && hoststartidx<hostendidx) Permits=GetWhiteListPermits(PopUpURL,PopUpURL+hoststartidx,hostendidx-hoststartidx);
-		else Permits=0;
+		Permits=0;
 
 		bBlockPopUps=(Permits&WL_ALLOW_POPUPS)==0;
 	}
@@ -6805,7 +6195,6 @@ bool CQToolbar::IsAdURL(TCHAR *ContentURL,TCHAR *BaseURL,BYTE context)
 
 	// Make absolute URL
 
-	if(BaseURL && m_IDNA.IsInternetURL(BaseURL)==false) BaseURL=NULL;
 	MakeAbsoluteURL(ContentURL_LowerCase,ContentURL,BaseURL);
 
 	// Lower-case URL
@@ -6953,7 +6342,6 @@ bool CQToolbar::IsVideoPlayerURL(TCHAR *ContentURL)
 	int HostStartIndex,HostEndIndex;
 	int status;
 	size_t url_len;
-	CIDNA idna;
 
 	const struct WhiteListEntry VideoPlayerWhiteList[NVIDEOPLAYERURLS]={
 		{L"youtube.com",11,WL_ALLOW_FLASH,0},
@@ -6971,9 +6359,7 @@ bool CQToolbar::IsVideoPlayerURL(TCHAR *ContentURL)
 	VideoPlayerWhiteListIndex=NVIDEOPLAYERURLS;
 
 	url_len=MAXURLLENGTH;
-	status=idna.URLToUnicode(ContentURL,&url_len,&HostStartIndex,&HostEndIndex,NULL);
-	if((status&IDNA_ILLEGAL)==0) result=(GetWhiteListIndex((struct WhiteListEntry*)VideoPlayerWhiteList,&VideoPlayerWhiteListIndex,ContentURL+HostStartIndex,HostEndIndex-HostStartIndex)!=-1);
-	else result=false;
+	result=false;
 
 	return result;
 }
@@ -6994,39 +6380,6 @@ void CQToolbar::OnNavigateError(TCHAR *url,long StatusCode,SHORT *Cancel)
 			if(lastEntry) lastSearch=lastEntry->Query;
 			else lastSearch=NULL;
 
-			if(lastSearch && (m_IDNA.IsAddress(lastSearch)&ADDRESS_URL)==0) // Do not auto search if last navigation was a URL with scheme
-			{
-				size_t last_len;
-				size_t url_len;
-				int hoststartidx;
-				TCHAR ErrorURL[MAXURLLENGTH];
-
-				StrCchLen(lastSearch,MAXURLLENGTH,last_len);
-				StringCbCopy(ErrorURL,sizeof ErrorURL,url);
-
-				url_len=MAXURLLENGTH;
-				hoststartidx=0;
-				if((m_IDNA.URLToUnicode(ErrorURL,&url_len,&hoststartidx,NULL,NULL)&IDNA_ILLEGAL)==0 && url_len>0 && last_len>0)
-				{
-					// Mask trailing slash in URL
-					if(ErrorURL[url_len-1]==L'/' && lastSearch[last_len-1]!=L'/') url_len--;
-
-					// Mask ':' or ':80'
-					if(lastSearch[last_len-1]==L':' && g_IE_MajorVersion>=7) last_len--;
-					else if(last_len>3 && !StrCmp(lastSearch+last_len-3,L":80")) last_len-=3;
-
-					// Auto search only if last search matches (failed) hostname
-					if(url_len-hoststartidx==last_len)
-					{
-						if(!StrCmpN(ErrorURL,L"http://",7) && !StrCmpN(ErrorURL+hoststartidx,lastSearch,(int)last_len))
-						{
-							SetCurrentType(TYPE_SEARCH,NULL);
-							Quero(lastSearch,TYPE_SEARCH,QUERO_REDIRECT);
-							*Cancel=TRUE;
-						}
-					}
-				}
-			} // End lastSearch was not a URL with scheme
 		} // End OPTION_SearchOnDNSFailure
 	} // End INET_E_RESOURCE_NOT_FOUND
 }
@@ -7102,39 +6455,7 @@ void CQToolbar::OnBeforeNavigate(IDispatch *pDisp,VARIANT *vUrl,VARIANT *vFlags,
 			SafeArrayUnaccessData(parrTemp);
 		}
 
-		if(m_IDNA.IsInternetURL(newurl))
-		{
-			// Test if newurl can be successfully converted to Ascii URL
-
-			StringCbCopy(AsciiURL,sizeof AsciiURL,newurl);
-			idna_status=URLToAscii(AsciiURL); // Check STD3ASCIIRules (result is passed to CheckIDN)
-
-			// Redirect IE6 to Ascii URL
-
-			if(g_IE_MajorVersion<7 && g_IDNSupport && idna_status&IDNA_MODIFIED)
-			{
-				*Cancel=TRUE;
-				IWebBrowser2 *pWebBrowser2=NULL;
-
-				if(SUCCEEDED_OK(pDisp->QueryInterface(IID_IWebBrowser2,(LPVOID*)&pWebBrowser2)) && pWebBrowser2)
-				{
-					RedirectRequest.Clear();
-					RedirectRequest.SetBrowser(pWebBrowser2);
-					RedirectRequest.SetURL(AsciiURL);
-
-					if(vFlags->vt == VT_I4) RedirectRequest.SetFlags(vFlags->intVal);
-					if(vTarget->vt == VT_BSTR) RedirectRequest.SetTarget(vTarget->bstrVal);					
-					if(vHeaders->vt == VT_BSTR) RedirectRequest.SetHeaders(vHeaders->bstrVal);
-
-					RedirectRequest.SetPostData(PostDataLen,PostData,false);
-
-					PostMessage(WM_QUERO_REDIRECTBROWSER);
-					bRedirectBrowser=true;
-				}
-			}
-			else if(idna_status&IDNA_ILLEGAL) *Cancel=TRUE;
-		}
-		else idna_status=0;
+		idna_status=0;
 
 		if(*Cancel==FALSE)
 		{
@@ -7153,14 +6474,6 @@ void CQToolbar::OnBeforeNavigate(IDispatch *pDisp,VARIANT *vUrl,VARIANT *vFlags,
 				BeforeDomainStartIndex=0;
 
 				// Check URL
-				if(m_IDNA.IsInternetURL(beforeURL))
-				{				
-					if(URLToUnicode(beforeURL,&BeforeHostStartIndex,&BeforeHostEndIndex,&BeforeDomainStartIndex)&IDNA_ILLEGAL) *Cancel=TRUE;
-					else if(g_Warnings)
-					{
-						if(CheckIDN(beforeURL,BeforeHostStartIndex,BeforeHostEndIndex,BeforeDomainStartIndex,idna_status)) *Cancel=TRUE;
-					}
-				}
 
 				if(*Cancel==FALSE)
 				{
@@ -7295,8 +6608,6 @@ int CQToolbar::URLToAscii(TCHAR *url)
 	size_t url_len;
 
 	url_len=MAXURLLENGTH;
-	status=m_IDNA.URLToAscii(url,&url_len,NULL,NULL,NULL);
-	if(status&IDNA_ILLEGAL) ShowSecurityWarning(WARNING_DIALOG_ILLEGAL_URL,url,(int)url_len,0);
 	
 	return status;
 }
@@ -7307,9 +6618,6 @@ int CQToolbar::URLToUnicode(TCHAR *url,int *HostStartIndex,int *HostEndIndex,int
 	size_t url_len;
 
 	url_len=MAXURLLENGTH;
-	status=m_IDNA.URLToUnicode(url,&url_len,HostStartIndex,HostEndIndex,DomainStartIndex);
-	if(status&IDNA_ILLEGAL) ShowSecurityWarning(WARNING_DIALOG_ILLEGAL_URL,url,(int)url_len,0);
-	
 	return status;
 }
 
@@ -7372,7 +6680,7 @@ bool CQToolbar::NavigateUp_Available()
 
 	StringCchLength(currentURL,MAXURLLENGTH,&len);
 
-	return m_IDNA.IsInternetURL(currentURL) && (size_t)(HostEndIndex+1)<len;
+	return 1;
 }
 
 LRESULT CQToolbar::OnRedirectBrowser(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -8744,7 +8052,6 @@ void CQToolbar::InitWords(TCHAR Words[MAXWORDS][MAXWORDLENGTH],UINT *nWords,BYTE
 		pPhrase=m_ComboQuero.GetFindText(bstrQuery);
 		if(bstrQuery)
 		{
-			if(m_IDNA.IsAddress(bstrQuery)) pPhrase=NULL;
 		}
 	}
 
@@ -9489,16 +8796,6 @@ LRESULT CQToolbar::OnQueroToolbarCommand(UINT uMsg, WPARAM wParam, LPARAM lParam
 	case QUERO_COMMAND_TOGGLE_AD_BLOCKER:
 		if(g_BlockAds&ADBLOCKER_Enable)
 		{
-			if(bTemporarilyUnblock || !m_IDNA.IsInternetURL(currentURL))
-			{
-				SetBlockAds(g_BlockAds&(~ADBLOCKER_Enable));
-				TemporarilyUnblockCurrentDomain(false,true,true);
-			}
-			else
-			{
-				TemporarilyUnblockCurrentDomain(true,false,true);
-				PostMessage(WM_COMMAND,IDM_REFRESH);
-			}
 			UpdateQueroInstances(UPDATE_TEMP_UNBLOCK);
 		}
 		else SetBlockAds(g_BlockAds|ADBLOCKER_Enable);

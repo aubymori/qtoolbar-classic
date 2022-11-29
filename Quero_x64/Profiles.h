@@ -26,7 +26,8 @@
 #define AFX_PROFILES_H__044BDB3E_31DD_43A7_A33A_8B5DD987B98F__INCLUDED_
 
 #include "resource.h"
-#include "IDNA.h"
+
+#define MAXURLLENGTH 2048
 
 // Limits
 
