@@ -72,54 +72,6 @@
     <ClCompile Include="ToolbarIcons.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UIEditInplace.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UIListBox.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UIOptionsAdBlocker.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UIOptionsAdvanced.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UIOptionsAppearance.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UIOptionsProfiles.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UIOptionsPropSheet.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UIOptionsSecurity.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UIOptionsSettings.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UIResizeWindow.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UISearchEngine.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UISearchProfile.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UIWarning.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UIWhiteList.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UIZoomFactor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="QueroFilter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Quero.def">
@@ -204,51 +156,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ToolbarIcons.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UIEditInplace.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UIListBox.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UIOptionsAdBlocker.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UIOptionsAdvanced.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UIOptionsAppearance.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UIOptionsProfiles.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UIOptionsPropSheet.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UIOptionsSecurity.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UIOptionsSettings.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UIResizeWindow.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UISearchEngine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UISearchProfile.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UIWarning.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UIWhitelist.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UIZoomFactor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="atlapp.h">

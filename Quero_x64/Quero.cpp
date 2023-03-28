@@ -38,7 +38,6 @@ CComModule _Module;
 
 BEGIN_OBJECT_MAP(ObjectMap)
 OBJECT_ENTRY(CLSID_QueroBand, CQueroBand)
-OBJECT_ENTRY(CLSID_QueroFilter, CQueroFilter)
 END_OBJECT_MAP()
 
 /////////////////////////////////////////////////////////////////////////////

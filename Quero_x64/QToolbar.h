@@ -964,7 +964,6 @@ public:
 	USHORT GetWhiteListPermits(TCHAR *url,TCHAR *host,int hostlen);
 	UINT GetWhiteListBlockAds(TCHAR *url);
 	bool GetWhiteListBlockPopUps(TCHAR *PopUpURL);
-	void ShowWhiteList(HWND hwnd,bool MatchCurrentURL=false);
 	void TemporarilyUnblock(bool bUnblock,bool bRemoveFromAllInstances,TCHAR* pattern,bool bSynchronize);
 	void TemporarilyUnblockCurrentDomain(bool bUnblock,bool bRemoveFromAllInstances,bool bSynchronize);
 

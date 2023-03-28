@@ -334,7 +334,6 @@ echo Warning : Cannot register Unicode DLL on Windows 95
     <ClCompile Include="QToolbar.cpp" />
     <ClCompile Include="Quero.cpp" />
     <ClCompile Include="QueroBand.cpp" />
-    <ClCompile Include="QueroFilter.cpp" />
     <ClCompile Include="RedirectRequest.cpp" />
     <ClCompile Include="StdAfx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|Win32'">Create</PrecompiledHeader>
@@ -344,21 +343,6 @@ echo Warning : Cannot register Unicode DLL on Windows 95
     </ClCompile>
     <ClCompile Include="Toolbar.cpp" />
     <ClCompile Include="ToolbarIcons.cpp" />
-    <ClCompile Include="UIEditInplace.cpp" />
-    <ClCompile Include="UIListBox.cpp" />
-    <ClCompile Include="UIOptionsAdBlocker.cpp" />
-    <ClCompile Include="UIOptionsAdvanced.cpp" />
-    <ClCompile Include="UIOptionsAppearance.cpp" />
-    <ClCompile Include="UIOptionsProfiles.cpp" />
-    <ClCompile Include="UIOptionsPropSheet.cpp" />
-    <ClCompile Include="UIOptionsSecurity.cpp" />
-    <ClCompile Include="UIOptionsSettings.cpp" />
-    <ClCompile Include="UIResizeWindow.cpp" />
-    <ClCompile Include="UISearchEngine.cpp" />
-    <ClCompile Include="UISearchProfile.cpp" />
-    <ClCompile Include="UIWarning.cpp" />
-    <ClCompile Include="UIWhiteList.cpp" />
-    <ClCompile Include="UIZoomFactor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Quero.def" />
@@ -436,21 +420,6 @@ echo Warning : Cannot register Unicode DLL on Windows 95
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="Toolbar.h" />
     <ClInclude Include="ToolbarIcons.h" />
-    <ClInclude Include="UIEditInplace.h" />
-    <ClInclude Include="UIListBox.h" />
-    <ClInclude Include="UIOptionsAdBlocker.h" />
-    <ClInclude Include="UIOptionsAdvanced.h" />
-    <ClInclude Include="UIOptionsAppearance.h" />
-    <ClInclude Include="UIOptionsProfiles.h" />
-    <ClInclude Include="UIOptionsPropSheet.h" />
-    <ClInclude Include="UIOptionsSecurity.h" />
-    <ClInclude Include="UIOptionsSettings.h" />
-    <ClInclude Include="UIResizeWindow.h" />
-    <ClInclude Include="UISearchEngine.h" />
-    <ClInclude Include="UISearchProfile.h" />
-    <ClInclude Include="UIWarning.h" />
-    <ClInclude Include="UIWhitelist.h" />
-    <ClInclude Include="UIZoomFactor.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="button_go.ico" />

@@ -153,7 +153,6 @@ void CComboQuero::OnHeightChange(int height)
 void CComboQuero::UpdateComboBoxInfo()
 {
 	COMBOBOXINFO info;
-
 	info.cbSize=sizeof(COMBOBOXINFO);
 	GetComboBoxInfo(m_hWnd,&info);
 	m_hWndList=info.hwndList;

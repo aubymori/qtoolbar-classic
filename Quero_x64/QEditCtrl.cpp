@@ -704,7 +704,6 @@ int CQEditCtrl::InitDragDropData(FORMATETC fmtetc[MAX_DRAGDROP_FORMATS],STGMEDIU
 			TCHAR data[MAXURLLENGTH];
 			LPVOID pData; // Pointer to the data that is to be stored in the Global storage medium
 			size_t size;
-			UINT AddressType;
 			bool bConvertToAscii; // Convert the data to Ascii before writing it to the Global storage medium
 			bool bIsURL;
 		

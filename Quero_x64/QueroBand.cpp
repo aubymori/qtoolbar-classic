@@ -206,12 +206,12 @@ STDMETHODIMP CQueroBand::GetBandInfo(DWORD dwBandID, DWORD dwViewMode, DESKBANDI
 		if(pdbi->dwMask & DBIM_MINSIZE)
 		{
 			pdbi->ptMinSize.x = toolbarminwidth;
-			pdbi->ptMinSize.y = toolbarheight;
+			pdbi->ptMinSize.y = toolbarheight+1;
 		}
 		if(pdbi->dwMask & DBIM_MAXSIZE)
 		{
 			pdbi->ptMaxSize.x = 0; // Ignored
-			pdbi->ptMaxSize.y = toolbarheight;
+			pdbi->ptMaxSize.y = toolbarheight+1;
 		}
 		if(pdbi->dwMask & DBIM_INTEGRAL)
 		{
@@ -222,7 +222,7 @@ STDMETHODIMP CQueroBand::GetBandInfo(DWORD dwBandID, DWORD dwViewMode, DESKBANDI
 		{
 			pdbi->ptActual.x = toolbarminwidth;
 			if(g_Options2&OPTION2_ShowSearchBox) pdbi->ptActual.x<<=1;
-			pdbi->ptActual.y = toolbarheight;
+			pdbi->ptActual.y = toolbarheight+1;
 		}
 		if(pdbi->dwMask & DBIM_TITLE)
 		{

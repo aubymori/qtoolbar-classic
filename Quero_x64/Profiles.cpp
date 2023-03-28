@@ -501,8 +501,6 @@ bool CProfiles::LoadEngine(HKEY hKeyProfile,int EngineId,SearchEngine *pEngine)
 		DWORD type;
 		TCHAR data[MAXURLLENGTH];
 		DWORD size;
-		size_t url_len;
-		int HostEndIndex;
 		int i;
 
 		EnumIndex=0;
@@ -1419,9 +1417,6 @@ void CProfiles::PrepareNavigation(TCHAR *pQuery,SearchEngine *pEngine,BSTR *pbst
 	UINT i;
 	size_t query_length;
 	size_t size;
-	int HostStartIndex;
-	int HostEndIndex;
-	int DomainStartIndex;
 	TCHAR* pQueryEncoded;
 	const TCHAR* pInputEncoding;
 	TCHAR* pParamsEncoded[MAX_QUERY_PARAMETERS];

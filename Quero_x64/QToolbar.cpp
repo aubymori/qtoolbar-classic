@@ -25,17 +25,6 @@
 #include "resource.h"
 #include "Quero.h"
 #include "QToolbar.h"
-#include "UIOptionsPropSheet.h"
-#include "UIOptionsSettings.h"
-#include "UIOptionsSecurity.h"
-#include "UIOptionsAdvanced.h"
-#include "UIOptionsAppearance.h"
-#include "UIOptionsAdBlocker.h"
-#include "UIOptionsProfiles.h"
-#include "UIWarning.h"
-#include "UIWhiteList.h"
-#include "UIZoomFactor.h"
-#include "UIResizeWindow.h"
 #include "QueroBand.h"
 
 #include <shlwapi.h>
@@ -55,6 +44,7 @@
 #include "..\QueroBroker\QueroBroker_i.c"
 
 #define LOGOGAP 2
+
 const int g_NavOpenMap[4]={0,navOpenInNewWindow,navOpenInNewTab,navOpenBackgroundTab};
 
 #define MapNewWinTabToNavOpen(newWinTab) g_NavOpenMap[newWinTab]
@@ -272,25 +262,6 @@ CQToolbar::CQToolbar() : m_pBrowser(NULL) , m_pBand(NULL) , m_IconAnimation(this
 				}
 				RegCloseKey(hKeyLocal);
 			}
-
-			// Register MIME filter
-			// Bug IE9: Tracking Protection Lists do not work any more if custom MIME filter is registered
-			
-			if(g_IE_MajorVersion<9)
-			{
-				IInternetSession *pInternetSession;
-				IClassFactory *pClassFactory;
-
-				if(CoGetClassObject(CLSID_QueroFilter,CLSCTX_INPROC_SERVER,NULL,IID_IClassFactory,(LPVOID*)&pClassFactory)==S_OK)
-				{
-					if(CoInternetGetSession(0,&pInternetSession,0)==S_OK)
-					{
-						pInternetSession->RegisterMimeFilter(pClassFactory,CLSID_QueroFilter,L"text/html");
-						pInternetSession->Release();
-					}
-					pClassFactory->Release();
-				}
-			}
 		}
 
 		// Load Quero settings and update version
@@ -313,12 +284,6 @@ CQToolbar::CQToolbar() : m_pBrowser(NULL) , m_pBand(NULL) , m_IconAnimation(this
 
 	// Create the background brush
 	hDefaultBackground=CreateSolidBrush(Colors[COLOR_Background]);
-
-	// Connect to the Quero Broker
-	if(g_IE_MajorVersion>=7)
-	{
-		CoCreateInstance(CLSID_QueroBroker,NULL,CLSCTX_LOCAL_SERVER, IID_IQueroBroker,(LPVOID*)&pQueroBroker);
-	}
 
 	// Set toolbar pointers
 	m_ComboQuero.SetToolbar(this);
@@ -411,25 +376,7 @@ void CQToolbar::SyncSettings()
 			cValueName=32;
 			size=sizeof data;
 
-			#ifdef COMPILE_FOR_WIN9X
-				char ValueNameA[32];
-				result=RegEnumValueA(hKey,EnumIndex,ValueNameA,&cValueName,NULL,&type,(LPBYTE)data,&size);
-				if(result==ERROR_SUCCESS)
-				{
-					if(MultiByteToWideChar(CP_ACP,0,ValueNameA,-1,ValueName,32)==0)
-					{
-						ValueName[0]=0;
-					}
-					if(type==REG_SZ)
-					{
-						TCHAR data2[MAXURLLENGTH];
-						if(MultiByteToWideChar(CP_ACP,0,(char*)data,-1,data2,MAXURLLENGTH)==0) data2[0]=0;
-						StringCbCopy(data,sizeof data,data2);
-					}
-				}
-			#else
-				result=RegEnumValue(hKey,EnumIndex,ValueName,&cValueName,NULL,&type,(LPBYTE)data,&size);
-			#endif
+			result=RegEnumValue(hKey,EnumIndex,ValueName,&cValueName,NULL,&type,(LPBYTE)data,&size);
 
 			if(result==ERROR_SUCCESS)
 			{
@@ -1141,7 +1088,7 @@ int CQToolbar::GetToolbarHeight()
 
 	if((g_Options2&OPTION2_ShowSearchBox) || (g_Options&OPTION_ShowSearchEngineComboBox) ||
 	 m_ButtonBar.HasVisibleButtons())	
-		height=ItemHeight+4+GetToolbarPadding()*2;
+		height=ItemHeight+2+GetToolbarPadding()*2;
 	else
 		height=0;
 
@@ -1251,7 +1198,6 @@ LRESULT CQToolbar::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandle
 	GetClientRect(&wndRect);
 	toolbarwidth=wndRect.right;
 	toolbarheight=wndRect.bottom;
-	if(IsWindowsVistaOrLater()) wndRect.right-=2;
 
 	if(toolbarheight && bToolbarCreated)
 	{
@@ -1271,12 +1217,11 @@ LRESULT CQToolbar::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandle
 		}
 
 		// Put a small gap between the combo box and the button bar
-		if(m_ButtonBar.HasVisibleButtons()) end=wndRect.right-2;
+		if(m_ButtonBar.HasVisibleButtons()) end=wndRect.right;
 		else end=wndRect.right;
 
 		// Add padding, if navigation buttons are present
 		wndRect.top=0;
-
 
 		// Calculate the dimensions of the Quero combo box
 		wndRect.left=0;
@@ -1298,7 +1243,7 @@ LRESULT CQToolbar::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandle
 			else wndRect.right=end;
 		}
 		else wndRect.right=wndRect.left;
-
+		wndRect.bottom -= 3;
 		// Set the dimensions of the Quero combo box
 		m_ComboQuero.MoveWindow(&wndRect,TRUE);
 
@@ -1931,14 +1876,6 @@ void CQToolbar::SetAutoMaximize(bool bAutoMaximize)
 
 LRESULT CQToolbar::OnShowOptions(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	CUIOptionsPropSheet Sheet(IDS_OPTIONS_TITLE);
-
-	CUIOptionsSettings PageSettings(this);
-	CUIOptionsAdBlocker PageAdBlocker(this);
-	CUIOptionsAppearance PageAppearance(this);
-	CUIOptionsProfiles PageProfiles(this);
-	CUIOptionsSecurity PageSecurity(this);
-	CUIOptionsAdvanced PageAdvanced(this);
 	UINT newOptions;
 	UINT newOptions2;
 	UINT newWarnings;
@@ -1947,291 +1884,16 @@ LRESULT CQToolbar::OnShowOptions(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 
 	if(IsOperationAllowed(LOCK_OptionsDialog))
 	{
-		PageSettings.m_ShowURL=g_ShowURL;
-		PageSettings.m_IDNSupport=g_IDNSupport;
-		PageSettings.m_Highlight=Highlight;
-		PageSettings.SetOptions(g_Options,g_Options2);
-
-		PageAdBlocker.m_HideFlashAds=(g_Options2&OPTION2_HideFlashAds)!=0;
-		PageAdBlocker.m_BlockPopUps=g_BlockPopUps;
-		PageAdBlocker.m_BlockAds=g_BlockAds;
-		PageAdBlocker.SetOptions(g_Options,g_Options2);
-
-		PageAppearance.m_IE_Navigation_Bar_Enabled=(g_IE_MajorVersion>=7);
 		if(pQueroBroker) // Query actual NoNavBar status
 		{
 			DWORD dwValue=0;
-			if(SUCCEEDED_OK(pQueroBroker->RegRead_DWORD(REG_VALUE_HKLM_NONAVBAR,&dwValue)))
-			{
-				PageAppearance.m_IE_Navigation_Bar_Enabled=false;
-			}
-			else pQueroBroker->RegRead_DWORD(REG_VALUE_HKCU_NONAVBAR,&dwValue);
-			if(dwValue) g_Options|=OPTION_HideNavigationBar;
-			else g_Options&=~OPTION_HideNavigationBar;
+			if (!SUCCEEDED_OK(pQueroBroker->RegRead_DWORD(REG_VALUE_HKLM_NONAVBAR, &dwValue))) pQueroBroker->RegRead_DWORD(REG_VALUE_HKCU_NONAVBAR, &dwValue);
+			if(dwValue) g_Options|=OPTION_HideNavigationBar; else g_Options&=~OPTION_HideNavigationBar;
 		}
-		PageAppearance.m_FontSize=g_FontSize;
-		PageAppearance.m_FontColor=g_FontColor;
-		PageAppearance.SetButtons(g_Buttons);
-		PageAppearance.SetOptions(g_Options,g_Options2);
-		PageAppearance.CopyQueroThemeFileName();
-
-		PageSecurity.m_IDNWarning=g_Warnings&WARNING_IDN;
-		PageSecurity.m_MissGlyphsWarning=(g_Warnings&WARNING_MISSGLYPHS)!=0;
-		PageSecurity.m_ASCIIRulesViolationWarning=(g_Warnings&WARNING_ASCIIRULES_VIOLATION)!=0;
-		PageSecurity.m_HighlightDomain=(g_Options&OPTION_HighlightDomain)!=0;
-		PageSecurity.m_DigitAsciiIndicator=(g_Options&OPTION_DigitAsciiIndicator)!=0;
-		PageSecurity.m_DisplayCertificateInformation=(g_Options2&OPTION2_DisplayCertificateInformation)!=0;
-
-		PageAdvanced.SetOptions(g_Options,g_Options2);
-		PageAdvanced.ReadUserAgent();
-
-		Sheet.m_psh.dwFlags |= PSH_NOAPPLYNOW | PSH_NOCONTEXTHELP;
-		Sheet.AddPage(PageSettings);
-		Sheet.AddPage(PageAdBlocker);
-		Sheet.AddPage(PageAppearance);
-		Sheet.AddPage(PageProfiles);
-		Sheet.AddPage(PageSecurity);
-		Sheet.AddPage(PageAdvanced);
 
 		Update_Instances=0;
 
 		//Sheet.SetActivePage(3);
-		if(Sheet.DoModal(GetIEFrameWindow()) == IDOK)
-		{
-
-			// Update search profiles
-			if(PageProfiles.SaveChanges())
-			{
-				Update_Instances|=UPDATE_SEARCHPROFILES;
-			}
-
-			if(PageSettings.m_ShowURL!=g_ShowURL)
-			{
-				g_ShowURL=PageSettings.m_ShowURL;
-				SaveSettingsValue(SETTINGS_VALUES_SHOWURL,(g_ShowURL?1:0));
-
-				Update_Instances|=UPDATE_SHOWURL;
-			}
-			if(PageSettings.m_IDNSupport!=g_IDNSupport)
-			{
-				g_IDNSupport=PageSettings.m_IDNSupport;
-				SaveSettingsValue(SETTINGS_VALUES_IDNSUPPORT,(g_IDNSupport?1:0));
-			}
-			if(PageSettings.m_Highlight!=Highlight)
-			{
-				SetHighlight(PageSettings.m_Highlight);
-			}
-			if(PageAdBlocker.m_BlockPopUps!=g_BlockPopUps)
-			{
-				bool changed;
-
-				changed=(PageAdBlocker.m_BlockPopUps&POPUPBLOCKER_Enable)!=(g_BlockPopUps&POPUPBLOCKER_Enable);
-
-				g_BlockPopUps=PageAdBlocker.m_BlockPopUps;
-
-				SaveSettingsValue(SETTINGS_VALUES_BLOCKPOPUPS,g_BlockPopUps);
-
-				if(changed)
-				{
-				}
-			}
-			if(PageAdBlocker.m_BlockAds!=g_BlockAds)
-			{
-				bool changed;
-
-				changed=(PageAdBlocker.m_BlockAds&ADBLOCKER_Enable)!=(g_BlockAds&ADBLOCKER_Enable);
-
-				g_BlockAds=PageAdBlocker.m_BlockAds;
-
-				SaveSettingsValue(SETTINGS_VALUES_BLOCKADS,g_BlockAds);
-
-				if(changed)
-				{
-					
-				}
-			}
-
-			newButtons=PageAppearance.GetButtons();
-
-			if(newButtons!=g_Buttons)
-			{
-				// Show Quero tip
-				if((newButtons&BUTTON_QUERO)==0 && (g_Buttons&BUTTON_QUERO)!=0)
-				{
-					TCHAR text[255];
-
-					StringCbCopy(text,sizeof text,GetString(IDS_TIP_QUERO_SHORTCUT));
-					StringCbCat(text,sizeof text,GetString(OPTION_QueroShortcutKey(g_Options)!=QKEY_AltQ?IDS_HINT_QUERO_ALT_Q:IDS_HINT_QUERO_ALT_SHIFT_Q));
-
-					MessageBox(text,L"Quero Toolbar",MB_OK|MB_ICONINFORMATION);
-				}
-				g_Buttons=newButtons;
-				SaveSettingsValue(SETTINGS_VALUES_BUTTONS,g_Buttons);
-
-				Update_Instances|=UPDATE_BUTTONS;
-			}
-
-			if(PageAppearance.m_FontSize!=g_FontSize)
-			{
-				g_FontSize=PageAppearance.m_FontSize;
-				SaveSettingsValue(SETTINGS_VALUES_FONTSIZE,g_FontSize);
-
-				Update_Instances|=UPDATE_FONTSIZE;
-			}
-
-			if(PageAppearance.m_FontColor!=g_FontColor)
-			{
-				g_FontColor=PageAppearance.m_FontColor;
-				SaveSettingsValue(SETTINGS_VALUES_FONTCOLOR,g_FontColor);
-
-				Update_Instances|=UPDATE_FONTCOLOR;
-			}
-
-			// Quero Theme File Name Changed?
-			if(WaitForSingleObject(g_hQSharedDataMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-			{
-				if(StrCmp(PageAppearance.m_QueroTheme_FileName,g_QueroTheme_FileName?g_QueroTheme_FileName:L""))
-				{
-					if(g_QueroTheme_FileName) SysFreeString(g_QueroTheme_FileName);
-
-					if(PageAppearance.m_QueroTheme_FileName[0])
-					{
-						g_QueroTheme_FileName=SysAllocString(PageAppearance.m_QueroTheme_FileName);
-						SaveSettingsValueEx(SETTINGS_VALUES_THEME,REG_SZ,(LPBYTE)PageAppearance.m_QueroTheme_FileName,SysStringLen(g_QueroTheme_FileName)*sizeof TCHAR);
-					}
-					else
-					{
-						g_QueroTheme_FileName=NULL;
-						DeleteSettingsValue(SETTINGS_VALUES_THEME);
-					}
-				}
-
-				ReleaseMutex(g_hQSharedDataMutex);
-			}
-
-			newWarnings=g_Warnings;
-			if(PageSecurity.m_IDNWarning) newWarnings|=WARNING_IDN;
-			else newWarnings&=~WARNING_IDN;
-			if(PageSecurity.m_MissGlyphsWarning) newWarnings|=WARNING_MISSGLYPHS;
-			else newWarnings&=~WARNING_MISSGLYPHS;
-			if(PageSecurity.m_ASCIIRulesViolationWarning) newWarnings|=WARNING_ASCIIRULES_VIOLATION;
-			else newWarnings&=~WARNING_ASCIIRULES_VIOLATION;
-
-			if(newWarnings!=g_Warnings)
-			{
-				g_Warnings=newWarnings;
-				SaveSettingsValue(SETTINGS_VALUES_WARNINGS,g_Warnings);
-			}
-
-			// Get settings
-			newOptions=g_Options;
-			newOptions2=g_Options2;
-			PageAdvanced.GetOptions(&newOptions,&newOptions2);
-			PageSettings.GetOptions(&newOptions,&newOptions2);
-			PageAdBlocker.GetOptions(&newOptions,&newOptions2);
-			PageAppearance.GetOptions(&newOptions,&newOptions2);
-			if(PageSecurity.m_HighlightDomain) newOptions|=OPTION_HighlightDomain;
-			else newOptions&=~OPTION_HighlightDomain;
-			if(PageSecurity.m_DigitAsciiIndicator) newOptions|=OPTION_DigitAsciiIndicator;
-			else newOptions&=~OPTION_DigitAsciiIndicator;
-			if(PageSecurity.m_DisplayCertificateInformation) newOptions2|=OPTION2_DisplayCertificateInformation;
-			else newOptions2&=~OPTION2_DisplayCertificateInformation;
-
-			// Redraw search box if SpecialCharIndicator changed
-			if(g_ShowURL && ((g_Options&OPTION_DigitAsciiIndicator) != (newOptions&OPTION_DigitAsciiIndicator)))
-				m_ComboQuero.RedrawWindow(NULL,NULL,RDW_INVALIDATE|RDW_NOERASE);
-
-			// Redraw edit control if HighlightDomain changed
-			if(g_ShowURL && ((g_Options&OPTION_HighlightDomain) != (newOptions&OPTION_HighlightDomain)))
-				m_ComboQuero.GetEditCtrl()->RedrawWindow(NULL,NULL,RDW_INVALIDATE|RDW_NOERASE);
-
-			// Rearrange toolbar layout
-			if(	(g_Options2&(OPTION2_ShowSearchBox|OPTION2_HideToolbarCloseButton)) != (newOptions2&(OPTION2_ShowSearchBox|OPTION2_HideToolbarCloseButton)) ||
-				(g_Options&OPTION_ShowSearchEngineComboBox) != (newOptions&OPTION_ShowSearchEngineComboBox))
-			{
-				Update_Instances|=UPDATE_LAYOUT;
-			}
-
-			// Show/Hide address/navigation bar
-			if(PageAppearance.m_IE_Navigation_Bar_InitialState!=PageAppearance.m_IE_Navigation_Bar)
-			{
-				if(pQueroBroker) pQueroBroker->RegWrite_DWORD(HandleToLong(GetIEFrameWindow()),REG_VALUE_HKCU_NONAVBAR,1,(newOptions&OPTION_HideNavigationBar)==0);
-			}
-
-			// Clear last history entry
-			if((g_Options&OPTION_RememberLastSearch) && (newOptions&OPTION_RememberLastSearch)==0)
-			{
-				Update_Instances|=UPDATE_FREELASTHISTORYENTRY;
-			}
-
-			// Enable/Disable Aero Theme
-			if((g_Options2&OPTION2_EnableAeroTheme) != (newOptions2&OPTION2_EnableAeroTheme))
-			{
-				Update_Instances|=UPDATE_AEROTHEME|UPDATE_LAYOUT;
-			}
-
-			// Update IE frame
-			if((g_Options2&(OPTION2_HideFavoritesButton|OPTION2_HideAddressBox)) != (newOptions2&(OPTION2_HideFavoritesButton|OPTION2_HideAddressBox)))
-			{
-				Update_Instances|=UPDATE_CUSTOMIZE_IEFRAME;
-			}
-
-			// Update title bar
-			if((g_Options2&(OPTION2_ShowCaption|OPTION2_ShowCaption_SysColor)) != (newOptions2&(OPTION2_ShowCaption|OPTION2_ShowCaption_SysColor)))
-			{
-				Update_Instances|=UPDATE_SHOW_CAPTION;
-			}
-
-			// Update display SSL certificate information
-			if((g_Options2&OPTION2_DisplayCertificateInformation) != (newOptions2&OPTION2_DisplayCertificateInformation))
-			{
-				Update_Instances|=UPDATE_DISPLAY_CERTIFICATE_INFORMATION;
-			}
-
-			// Enable/Disable Quero context menu extension
-			if((g_Options2&OPTION2_EnableQueroContextMenu) != (newOptions2&OPTION2_EnableQueroContextMenu))
-			{
-				Update_Instances|=UPDATE_QUERO_CONTEXT_MENU;
-			}
-
-			// Enable/Disable search prompt
-			if((g_Options2&OPTION2_SearchPrompt) != (newOptions2&OPTION2_SearchPrompt))
-			{
-				Update_Instances|=UPDATE_SHOWURL;
-			}
-
-			// Update Quero button image
-			if((g_Options&OPTION_WhiteQueroButton) != (newOptions&OPTION_WhiteQueroButton))
-			{
-				Update_Instances|=UPDATE_QUERO_LOGO;
-			}
-
-			// Save options to registry and update Quick Find
-			if(newOptions!=g_Options)
-			{
-				g_Options=newOptions;
-				SaveSettingsValue(SETTINGS_VALUES_OPTIONS1,g_Options);
-			}
-			if(newOptions2!=g_Options2)
-			{
-				g_Options2=newOptions2;
-				SaveSettingsValue(SETTINGS_VALUES_OPTIONS2,g_Options2);
-			}
-
-			// Update Custom User Agent
-			PageAdvanced.WriteUserAgent();
-
-			// Sync Settings and update UI of all instances
-			if(pQueroBroker)
-			{
-				// Propogate new options to QueroBroker
-				pQueroBroker->SetOptions(g_Options,g_Options2,Update_Instances|UPDATE_SYNC_SETTINGS);
-			}
-			else
-			{
-				if(Update_Instances) UpdateQueroInstances(Update_Instances);
-			}
-		}
 	} // End IsOperationAllowed
 
 	bHandled=TRUE;
@@ -2240,18 +1902,11 @@ LRESULT CQToolbar::OnShowOptions(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 
 LRESULT CQToolbar::OnShowZoomFactor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	CUIZoomFactor CustomZoom;
-	
-	CustomZoom.pToolbar=this;
-	CustomZoom.m_ZoomFactor=ZoomFactor;
-	CustomZoom.DoModal(m_hWnd);
-
 	return 0;
 }
 
 LRESULT CQToolbar::OnShowResizeWindow(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	CUIResizeWindow UIResizeWindow;
 	HWND hwnd,parenthwnd;
 	RECT rect;
 	int max_width,max_height;
@@ -2274,21 +1929,6 @@ LRESULT CQToolbar::OnShowResizeWindow(UINT uMsg, WPARAM wParam, LPARAM lParam, B
 	max_width=GetSystemMetrics(SM_CXSCREEN);
 	max_height=GetSystemMetrics(SM_CYSCREEN);
 #endif
-	
-	UIResizeWindow.pToolbar=this;
-	UIResizeWindow.m_Width=current_width;
-	UIResizeWindow.m_Height=current_height;
-
-	if(UIResizeWindow.DoModal(m_hWnd)==IDOK)
-	{
-		if(UIResizeWindow.m_Width<RESIZEWINDOW_WIDTH_MIN) UIResizeWindow.m_Width=RESIZEWINDOW_WIDTH_MIN;
-		else if(UIResizeWindow.m_Width>max_width) UIResizeWindow.m_Width=max_width;
-
-		if(UIResizeWindow.m_Height<RESIZEWINDOW_HEIGHT_MIN) UIResizeWindow.m_Height=RESIZEWINDOW_HEIGHT_MIN;
-		else if(UIResizeWindow.m_Height>max_height) UIResizeWindow.m_Height=max_height;
-
-		ResizeWindow(0,0,UIResizeWindow.m_Width,UIResizeWindow.m_Height,false);
-	}
 
 	return 0;
 }
@@ -2443,19 +2083,6 @@ void CQToolbar::UpdateQueroInstance(UINT update)
 		if(IsActive) m_ReBar.OnEnableAeroThemeChanged();
 	}
 	#endif
-}
-
-void CQToolbar::ShowWhiteList(HWND hwnd,bool MatchCurrentURL)
-{
-	if(IsOperationAllowed(LOCK_WhiteList))
-	{
-		CUIWhiteList UIWhiteList;
-
-		UIWhiteList.m_pToolbar=this;
-		UIWhiteList.MatchCurrentURL=MatchCurrentURL;
-
-		UIWhiteList.DoModal(hwnd);
-	}
 }
 
 LRESULT CQToolbar::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -3056,10 +2683,7 @@ void CQToolbar::AppendCurrentAddress(TCHAR *pQueryWithAddress,TCHAR *pOriginalQu
 
 UINT CQToolbar::SplitIntoWords(TCHAR *str,TCHAR Words[MAXWORDS][MAXWORDLENGTH],BYTE options,UINT MaxWords)
 {
-	TCHAR *pStr;
 	UINT n;
-	UINT i,j,k,l;
-	bool bInsideQuotes;
 
 	n=0;
 
@@ -5164,7 +4788,6 @@ void CQToolbar::OnContentBlockedButtonClick(POINT *point,RECT *rcExclude)
 			case ID_BLOCKED_ADSCRIPTS:
 			case ID_BLOCKED_DIVS:
 			case ID_ALLOWED_SITES:
-				ShowWhiteList(m_ComboQuero.m_hWndEdit,true);
 				break;
 			case ID_TEMP_UNBLOCK:
 				TemporarilyUnblockCurrentDomain(!bTemporarilyUnblock,bTemporarilyUnblock,true);
@@ -5640,10 +5263,7 @@ void CQToolbar::PopupBlocked()
 BYTE CQToolbar::SetCurrentURL(TCHAR *url) // Returns special character class
 {
 	TCHAR *pCurrentURL;
-	TCHAR ch;
 	int i;
-	size_t url_size;
-	int status;
 	BYTE result=SPECIALCHARS_NON;
 
 	StringCbCopy(currentAsciiURL,sizeof currentAsciiURL,url);
@@ -5738,8 +5358,6 @@ void CQToolbar::MakeAbsoluteURL(TCHAR *AbsoluteURL,TCHAR *URL,TCHAR *BaseURL)
 bool CQToolbar::CheckIDN(TCHAR *url_decoded,int hoststartidx,int hostendidx,int domainstartidx,int idna_status)
 {
 	int i,hostlen;
-	short BaseCharSet,NextCharSet;
-	DWORD cp;
 	bool suspicious;
 #ifndef COMPILE_FOR_WIN9X
 	bool missglyphs;
@@ -5934,25 +5552,12 @@ bool CQToolbar::ShowSecurityWarning(int WarningDialog,TCHAR *pHost,int HostLen,i
 	m_ComboQuero.GetClientRect(&rect);
 	m_ComboQuero.ClientToScreen(&rect);
 
-	CUIWarning SecurityWarning(rect.left,rect.bottom,(TCHAR*)GetString(WarnTitle[WarningDialog]),desc,hFont,hFontBold,EnableAddToWL,EnableProceed);
-	result=SecurityWarning.DoModal(m_hWnd)!=IDOK;
 
 	if(WarningDialog!=WARNING_DIALOG_ILLEGAL_URL)
 	{
 		PreviewIDN=false;
 		m_ComboQuero.RedrawWindow(NULL,NULL,RDW_INVALIDATE|RDW_NOERASE);
 		::ShowWindow(m_ComboQuero.m_hWndEdit,SW_SHOW);
-
-		// Add to whitelist
-		if(result==false)
-		{
-			if(SecurityWarning.IsAddToWhiteList())
-			{
-				StringCbCopyN(host,sizeof host,pHost+WL_HostStartIndex,(HostLen-WL_HostStartIndex)*sizeof(TCHAR));
-
-				AddToWhiteList(host,Allow[WarningDialog],true);
-			}
-		}
 	}
 	
 	return result;
@@ -6034,8 +5639,6 @@ USHORT CQToolbar::GetWhiteListPermits(TCHAR *url,TCHAR *host,int hostlen)
 {
 	int i;
 	USHORT Permits;
-	UINT AddressType;
-	UINT AllowedAddressTypes;
 
 	Permits=0;
 
@@ -6075,8 +5678,6 @@ UINT CQToolbar::GetWhiteListBlockAds(TCHAR *url)
 
 	if(url)
 	{
-		int hoststartidx,hostendidx;
-		int status;
 		size_t url_len;
 
 		url_len=MAXURLLENGTH;
@@ -6107,8 +5708,6 @@ bool CQToolbar::GetWhiteListBlockPopUps(TCHAR *PopUpURL)
 
 	if(bBlockPopUps && PopUpURL)
 	{
-		int hoststartidx,hostendidx;
-		int status;
 		size_t url_len;
 
 		url_len=MAXURLLENGTH;
@@ -6118,22 +5717,6 @@ bool CQToolbar::GetWhiteListBlockPopUps(TCHAR *PopUpURL)
 	}
 
 	return bBlockPopUps;
-}
-
-bool CQToolbar::IsBannerAd(TCHAR *ContentURL,TCHAR *BaseURL,int AttrParsed,int ImgWidth,int ImgHeight)
-{
-	BYTE context;
-
-	// Match ad image dimensions
-
-	if((AttrParsed&(ATTR_WIDTH|ATTR_HEIGHT))==(ATTR_WIDTH|ATTR_HEIGHT))
-	{
-		if(IsAdImageSize(ImgWidth,ImgHeight)) return true;
-		context=ISADURL_CONTEXT_BANNER;
-	}
-	else context=ISADURL_CONTEXT_BANNER|ISADURL_CONTEXT_EXTRACT_SIZE;
-
-	return IsAdURL(ContentURL,BaseURL,context);
 }
 
 #define NADIMAGESIZES 11
@@ -6339,8 +5922,6 @@ bool CQToolbar::IsAdURL(TCHAR *ContentURL,TCHAR *BaseURL,BYTE context)
 bool CQToolbar::IsVideoPlayerURL(TCHAR *ContentURL)
 {
 	bool result;
-	int HostStartIndex,HostEndIndex;
-	int status;
 	size_t url_len;
 
 	const struct WhiteListEntry VideoPlayerWhiteList[NVIDEOPLAYERURLS]={
