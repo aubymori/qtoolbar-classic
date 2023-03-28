@@ -1095,28 +1095,6 @@ HRESULT STDMETHODCALLTYPE HTMLWindow3ShowModelessWrapper(IHTMLWindow3 __RPC_FAR*
 		AllowPopUp=true;
 	}
 
-	if(AllowPopUp==false)
-	{
-		// Check if current domain is in whitelist
-		if(WaitForSingleObject(g_hQSharedDataMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-		{
-			QThreadData* QueroInstance;
-
-			QueroInstance=GetCurrentQueroInstance();
-			if(QueroInstance)
-			{
-				if(QueroInstance->pToolbar->GetWhiteListBlockPopUps(NULL))
-				{
-					if(url) QueroInstance->pToolbar->AddToBlockedContent(BLOCKED_CONTENT_POPUP,url,NULL,false);
-					QueroInstance->pToolbar->PopupBlocked();
-				}
-				else AllowPopUp=true;
-			}
-
-			ReleaseMutex(g_hQSharedDataMutex);
-		}
-	}
-
 	if(AllowPopUp)
 	{
 		result=ORIG_HTMLWINDOW3SHOWMODELESS(pWin,url,varArgIn,varOptions,pomWindowResult);
@@ -1425,10 +1403,6 @@ HRESULT STDMETHODCALLTYPE DocHostUIHandler_ShowContextMenu(IDocHostUIHandler __R
 													if(nCmd==ID_CTXMENU_GO)
 													{
 														pToolbar->Quero(selection,TYPE_ADDRESS,(newWinTab==OPEN_SameWindow && g_ShowURL)?QUERO_REDIRECT|QUERO_SETTEXT:QUERO_REDIRECT,newWinTab);
-													}
-													else if(nCmd==ID_CTXMENU_HIGHLIGHT)
-													{
-														pToolbar->HighlightWord(selection);
 													}
 													else if(nCmd>=ID_CTXMENU_QUERO && nCmd<(ID_CTXMENU_QUERO+pToolbar->nengines))
 													{

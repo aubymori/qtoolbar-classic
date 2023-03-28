@@ -27,11 +27,23 @@
 #include <mshtmhst.h>
 #include "resource.h"       // main symbols
 #include "ExDispID.h"
-#include "QueroFilter.h"
 
 // MangageBrowserConnection types
 #define ADVISE 1
 #define UNADVISE 0
+#if _MSC_VER > 1000
+#pragma once
+#endif // _MSC_VER > 1000
+
+#include "resource.h"       // main symbols
+#include "Quero.h"
+#include "QToolbar.h"
+
+#define BUFFER_SIZE 16384
+#define TAG_SIZE 2048
+#define MAX_ATTR_LEN 255
+#define MAX_TAGNAME_LEN 6
+#define N_TAGNAMES 8
 
 // Version Functions
 bool LoadVersion(HKEY hKeyQuero,VersionInfo *vi);

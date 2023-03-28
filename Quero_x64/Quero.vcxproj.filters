@@ -60,9 +60,6 @@
     <ClCompile Include="QueroBand.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RedirectRequest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="StdAfx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -78,9 +75,6 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="QueroBand.rgs">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="QueroFilter.rgs">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="UISettingsPropSheet.rgs">
@@ -141,9 +135,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="QueroBand.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RedirectRequest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Resource.h">
@@ -218,9 +209,6 @@
     <ClInclude Include="atlwinx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="QueroFilter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="button_go.ico">
@@ -235,9 +223,15 @@
     <Image Include="search_notfound.ico">
       <Filter>Resource Files</Filter>
     </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <Media Include="beep.wav" />
+    <Image Include="icon_search.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icon_search_notfound.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icon_url.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="Quero.dll.manifest" />

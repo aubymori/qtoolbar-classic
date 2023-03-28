@@ -400,10 +400,6 @@ void CQToolbar::SyncSettings()
 					g_ShowURL=(dword!=0);
 					break;
 
-				case SETTINGS_VALUES_BLOCKADS:
-					g_BlockAds=dword;
-					break;
-
 				case SETTINGS_VALUES_BLOCKPOPUPS:
 					g_BlockPopUps=dword;
 					break;
@@ -785,9 +781,6 @@ CQToolbar::~CQToolbar()
 
 	// Destroy window
 	if(IsWindow()) DestroyWindow();
-
-	// Free redirect data
-	RedirectRequest.Clear();
 
 	// Release the Web browser
 	SetBrowser(NULL);
@@ -1468,400 +1461,6 @@ LRESULT CQToolbar::OnNotify(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHand
 	return result;
 }
 
-void CQToolbar::OnQueroButtonClick(UINT flags,POINT *point,RECT *rcExclude)
-{
-	TPMPARAMS tpm;
-	HMENU hMenuLoaded;
-	MENUITEMINFO miInfo;
-	TCHAR Words[MAXWORDS][MAXWORDLENGTH];
-	UINT nWords;
-	UINT NewZoomFactor;
-	BYTE NewZoomMethod;
-	BYTE OldZoomMethod;
-	int cxscreen,cyscreen;
-	int topx=0,topy=0;
-	UINT resizewindowflags=0;
-	size_t cch;
-
-	UINT returncmd,i;
-	int id;
-
-	if(IsOperationAllowed(LOCK_QueroToolbarMenu))
-	{
-		hMenuLoaded = LoadMenu(_Module.GetResourceInstance(),MAKEINTRESOURCE(IDR_MENU));
-		if(hMenuLoaded)
-		{
-			hPopupMenu = GetSubMenu(hMenuLoaded,0);
-			if(hPopupMenu)
-			{
-				// Get current hightlight, pop-up and ad blocker settings
-
-				if(Highlight) CheckMenuItem(hPopupMenu,ID_QUERO_HIGHLIGHT,MF_CHECKED);
-				if(g_BlockAds&ADBLOCKER_Enable) CheckMenuItem(hPopupMenu,ID_QUERO_BLOCKADS,MF_CHECKED);
-				if(g_BlockPopUps&POPUPBLOCKER_Enable) CheckMenuItem(hPopupMenu,ID_QUERO_BLOCKPOPUPS,MF_CHECKED);
-				if(g_Options2&OPTION2_HideFlashAds) CheckMenuItem(hPopupMenu,ID_QUERO_HIDEFLASHADS,MF_CHECKED);
-
-				// Remove Block Ads in IE9 (currently replaced by Quero AdBlock IE TPL)
-				
-				if(g_IE_MajorVersion>=9) RemoveMenu(hPopupMenu,ID_QUERO_BLOCKADS,MF_BYCOMMAND);
-
-				// Check current zoom settings
-
-				switch(ZoomFactor)
-				{
-				case 50:
-					id=ID_QUERO_ZOOM_50;
-					break;
-				case 80:
-					id=ID_QUERO_ZOOM_80;
-					break;
-				case 90:
-					id=ID_QUERO_ZOOM_90;
-					break;
-				case 100:
-					id=ID_QUERO_ZOOM_100;
-					break;
-				case 110:
-					id=ID_QUERO_ZOOM_110;
-					break;
-				case 120:
-					id=ID_QUERO_ZOOM_120;
-					break;
-				case 150:
-					id=ID_QUERO_ZOOM_150;
-					break;
-				case 200:
-					id=ID_QUERO_ZOOM_200;
-					break;
-				case 400:
-					id=ID_QUERO_ZOOM_400;
-					break;
-				default:
-					id=0;
-				}
-				if(id) CheckMenuRadioItem(hPopupMenu,id,id,id,MF_BYCOMMAND);
-				if(UseOpticalZoom())
-				{
-					id=ID_QUERO_OPTICAL_ZOOM;
-					OldZoomMethod=ZOOMPAGE_SET_OPTICAL_ZOOM;
-				}
-				else
-				{
-					id=ID_QUERO_CSS_ZOOM;
-					OldZoomMethod=ZOOMPAGE_PUT_ZOOM;
-				}
-				CheckMenuRadioItem(hPopupMenu,id,id,id,MF_BYCOMMAND);
-				if(g_IE_MajorVersion<7) EnableMenuItem(hPopupMenu,ID_QUERO_OPTICAL_ZOOM,MF_BYCOMMAND|MF_GRAYED);
-				NewZoomMethod=OldZoomMethod;
-				NewZoomFactor=0;
-
-				// Insert find on page suggestions
-
-				InitWords(Words,&nWords,INITWORDS_IncludeWholePhrase|INITWORDS_Bigrams|INITWORDS_SearchBox|INITWORDS_History);
-
-				if(nWords)
-				{
-					miInfo.cbSize=sizeof(MENUITEMINFO);
-					miInfo.fMask=MIIM_DATA|MIIM_ID|MIIM_STATE|MIIM_TYPE;
-					miInfo.fState=MFS_ENABLED;
-					miInfo.fType=MFT_STRING;
-					miInfo.wID=ID_QUERO_FINDWORD;
-					i=0;
-					while(i<nWords)
-					{
-						miInfo.dwTypeData=Words[i];
-						StrCchLen(Words[i],MAXWORDLENGTH,cch);
-						miInfo.cch=(UINT)cch;
-						InsertMenuItem(hPopupMenu,ID_QUERO_FINDONPAGE_EMPTY,FALSE,&miInfo);
-						miInfo.wID++;
-						i++;
-					}
-
-					RemoveMenu(hPopupMenu,ID_QUERO_FINDONPAGE_EMPTY,MF_BYCOMMAND);
-				}
-
-				// Insert search profiles
-
-				miInfo.cbSize=sizeof(MENUITEMINFO);
-				miInfo.fMask=MIIM_DATA|MIIM_ID|MIIM_STATE|MIIM_TYPE;
-				miInfo.fState=MFS_ENABLED;
-				miInfo.fType=MFT_STRING|MFT_RADIOCHECK;
-
-				miInfo.wID=ID_QUERO_PROFILES;
-				id=m_Profiles.First();
-				while(id!=-1)
-				{
-					BSTR pProfileName;
-
-					pProfileName=m_Profiles.GetProfileName(id);
-					if(pProfileName)
-					{
-						miInfo.dwTypeData=pProfileName;
-						miInfo.cch=SysStringLen(pProfileName);
-					}
-					else
-					{
-						miInfo.dwTypeData=L"?";
-						miInfo.cch=1;
-					}
-					if(CurrentProfileId==id) miInfo.fState|=MFS_CHECKED;
-					else miInfo.fState&=~MFS_CHECKED;
-					InsertMenuItem(hPopupMenu,ID_QUERO_PROFILES_EMPTY,FALSE,&miInfo);
-					miInfo.wID++;
-					id=m_Profiles.Next();
-				}
-				if(m_Profiles.ProfileCount) RemoveMenu(hPopupMenu,ID_QUERO_PROFILES_EMPTY,MF_BYCOMMAND);
-
-				// Insert search engines
-
-				miInfo.wID=ID_QUERO_DEFAULTENGINE;
-				for(i=0;i<nengines;i++)
-				{
-					miInfo.dwTypeData=m_Profiles.CurrentProfile.Engines[i].Name;
-					miInfo.cch=SysStringLen(m_Profiles.CurrentProfile.Engines[i].Name);
-					if(m_Profiles.CurrentProfile.DefaultEngineId==m_Profiles.CurrentProfile.Engines[i].id) miInfo.fState|=MFS_CHECKED;
-					else miInfo.fState&=~MFS_CHECKED;
-					InsertMenuItem(hPopupMenu,ID_QUERO_DEFAULTENGINE_EMPTY,FALSE,&miInfo);
-					miInfo.wID++;
-				}
-				if(i) RemoveMenu(hPopupMenu,ID_QUERO_DEFAULTENGINE_EMPTY,MF_BYCOMMAND);
-
-				// Auto Maximize
-
-				if(g_Options2&OPTION2_AutoMaximize) CheckMenuItem(hPopupMenu,ID_QUERO_RESIZEWINDOW_AUTO_MAXIMIZE,MF_BYCOMMAND|MF_CHECKED);
-
-				// Insert resize window dimensions
-
-				#ifdef COMPILE_FOR_WIN9X
-				cxscreen=GetSystemMetrics(SM_CXVIRTUALSCREEN);
-				cyscreen=GetSystemMetrics(SM_CYVIRTUALSCREEN);
-				#else
-				cxscreen=GetSystemMetrics(SM_CXSCREEN);
-				cyscreen=GetSystemMetrics(SM_CYSCREEN);
-				#endif
-
-				if(cxscreen<1024 || cyscreen<768) RemoveMenu(hPopupMenu,ID_QUERO_WINDOWSIZE_1024X768,MF_BYCOMMAND);
-				if(cxscreen<880 || cyscreen<960) RemoveMenu(hPopupMenu,ID_QUERO_WINDOWSIZE_880X960,MF_BYCOMMAND);
-				if(cxscreen<880 || cyscreen<720) RemoveMenu(hPopupMenu,ID_QUERO_WINDOWSIZE_880X720,MF_BYCOMMAND);
-				if(cxscreen<880 || cyscreen<660) RemoveMenu(hPopupMenu,ID_QUERO_WINDOWSIZE_880X660,MF_BYCOMMAND);
-				if(cxscreen<800 || cyscreen<600) RemoveMenu(hPopupMenu,ID_QUERO_WINDOWSIZE_800X600,MF_BYCOMMAND);
-				if(cxscreen<640 || cyscreen<480) RemoveMenu(hPopupMenu,ID_QUERO_WINDOWSIZE_640X480,MF_BYCOMMAND);
-
-				tpm.cbSize = sizeof(TPMPARAMS);
-				tpm.rcExclude = *rcExclude;
-
-				// Add menu icons (Windows Vista)
-
-				#ifdef COMPILE_FOR_WINDOWS_VISTA
-				//CMenuIcon MenuIcon;
-				//MenuIcon.AddIconToMenuItem(g_Icons[ICON_SEARCH],NULL,hPopupMenu,0,MF_BYPOSITION);
-				#endif
-
-				// Show toolbar menu
-
-				returncmd=TrackPopupMenuEx(hPopupMenu,flags|TPM_LEFTBUTTON|TPM_VERTICAL|TPM_RETURNCMD,point->x,point->y,m_hWnd,&tpm);
-				
-				if(returncmd>=ID_QUERO_FINDWORD && returncmd<ID_QUERO_FINDWORD+nWords)
-				{
-					TCHAR *pFind;
-					TCHAR findOnPage[MAXWORDLENGTH+1];
-
-					pFind=Words[returncmd-ID_QUERO_FINDWORD];
-
-					m_pBand->FocusChange(FALSE);
-					StringCchCopy(findOnPage,MAXURLLENGTH,pFind);
-					m_ComboQuero.SetText(findOnPage,TYPE_SEARCH,NULL,false);
-
-					FindOnPage(FIND_INITIATED_BY_QueroMenu,FIND_First|FIND_Focus);
-				}
-				else if(returncmd>=ID_QUERO_PROFILES && returncmd<ID_QUERO_PROFILES+m_Profiles.ProfileCount)
-				{
-					id=m_Profiles.IndexToProfileId(returncmd-ID_QUERO_PROFILES);
-					if(id!=-1)
-					{
-						m_Profiles.SaveDefaultProfileId(id,true);
-						if(id!=CurrentProfileId) SelectProfile(id);
-					}
-				}
-				else if(returncmd>=ID_QUERO_DEFAULTENGINE && returncmd<ID_QUERO_DEFAULTENGINE+nengines)
-				{
-					id=m_Profiles.IndexToEngineId(returncmd-ID_QUERO_DEFAULTENGINE);
-					if(id!=-1)
-					{
-						m_Profiles.CurrentProfile.DefaultEngineId=id;
-						m_Profiles.SaveDefaultEngineId(&m_Profiles.CurrentProfile,true);
-						SelectEngine(returncmd-ID_QUERO_DEFAULTENGINE);
-					}
-				}
-				else switch(returncmd)
-				{
-				case ID_QUERO_FINDNEXT:
-					FindOnPage(FIND_INITIATED_BY_QueroMenu,FIND_Next|FIND_Focus);
-					break;
-				case ID_QUERO_HIGHLIGHT:
-					PostMessage(WM_QUERO_TOOLBAR_COMMAND,QUERO_COMMAND_SETHIGHLIGHT,!Highlight);
-					break;
-				case ID_QUERO_HIDEFLASHADS:
-					PostMessage(WM_QUERO_TOOLBAR_COMMAND,QUERO_COMMAND_SETHIDEFLASHADS,g_Options2^OPTION2_HideFlashAds);
-					break;
-				case ID_QUERO_BLOCKADS:
-					PostMessage(WM_QUERO_TOOLBAR_COMMAND,QUERO_COMMAND_SETBLOCKADS,g_BlockAds^ADBLOCKER_Enable);
-					break;
-				case ID_QUERO_CLEARHISTORY:
-					ClearHistory();
-					break;
-				case ID_QUERO_ZOOM_50:
-					NewZoomFactor=50;
-					break;
-				case ID_QUERO_ZOOM_80:
-					NewZoomFactor=80;
-					break;
-				case ID_QUERO_ZOOM_90:
-					NewZoomFactor=90;
-					break;
-				case ID_QUERO_ZOOM_100:
-					NewZoomFactor=100;
-					break;
-				case ID_QUERO_ZOOM_110:
-					NewZoomFactor=110;
-					break;
-				case ID_QUERO_ZOOM_120:
-					NewZoomFactor=120;
-					break;
-				case ID_QUERO_ZOOM_150:
-					NewZoomFactor=150;
-					break;
-				case ID_QUERO_ZOOM_200:
-					NewZoomFactor=200;
-					break;
-				case ID_QUERO_ZOOM_400:
-					NewZoomFactor=400;
-					break;
-				case ID_QUERO_CUSTOM_ZOOM:
-					PostMessage(WM_QUERO_SHOWZOOMFACTOR);
-					break;
-				case ID_QUERO_CSS_ZOOM:
-					NewZoomMethod=ZOOMPAGE_PUT_ZOOM;
-					break;
-				case ID_QUERO_OPTICAL_ZOOM:
-					NewZoomMethod=ZOOMPAGE_SET_OPTICAL_ZOOM;
-					break;
-				case ID_QUERO_RESIZEWINDOW_AUTO_MAXIMIZE:
-					PostMessage(WM_QUERO_TOOLBAR_COMMAND,QUERO_COMMAND_SETAUTOMAXIMIZE,g_Options2^OPTION2_AutoMaximize);
-					break;
-				case ID_QUERO_WINDOWSIZE_640X480:
-					cxscreen=640;
-					cyscreen=480;
-					break;
-				case ID_QUERO_WINDOWSIZE_800X600:
-					cxscreen=800;
-					cyscreen=600;
-					break;
-				case ID_QUERO_WINDOWSIZE_880X660:
-					cxscreen=880;
-					cyscreen=660;
-					break;
-				case ID_QUERO_WINDOWSIZE_880X720:
-					cxscreen=880;
-					cyscreen=720;
-					break;
-				case ID_QUERO_WINDOWSIZE_880X960:
-					cxscreen=880;
-					cyscreen=960;
-					break;
-				case ID_QUERO_WINDOWSIZE_1024X768:
-					cxscreen=1024;
-					cyscreen=768;
-					break;
-				case ID_QUERO_WINDOWSIZE_FULLSCREEN:
-					resizewindowflags=RESIZEWINDOW_FULLSCREEN|RESIZEWINDOW_MOVE;
-					break;
-				case ID_QUERO_RESIZEWINDOW_CUSTOM:
-					PostMessage(WM_QUERO_SHOWRESIZEWINDOW);
-					break;
-				case ID_QUERO_OPTIONS:
-					PostMessage(WM_QUERO_SHOWOPTIONS);			
-					break;
-				case ID_QUERO_ABOUT:
-					TCHAR path[MAXURLLENGTH];
-					DWORD len;
-					VARIANT vEmpty;
-
-					StringCchCopy(path,MAXURLLENGTH,_T("res://"));
-					len=GetModuleFileName(_Module.m_hInst,path+6,MAXURLLENGTH-16);
-					StringCchCopy(path+len+6,MAXURLLENGTH-len-6,_T("/about.html"));
-
-					InternalLink=true;
-
-					VariantInit(&vEmpty);
-					if(m_pBrowser) m_pBrowser->Navigate(CComBSTR(path), &vEmpty, &vEmpty, &vEmpty, &vEmpty);
-
-					break;
-				} // end of switch
-
-				if(NewZoomFactor) // Zoom page
-				{
-					ZoomFactor=NewZoomFactor;
-
-					SaveSettingsValue(SETTINGS_VALUES_ZOOMFACTOR,ZoomFactor);
-					ZoomPage(ZoomFactor,OldZoomMethod);
-				}
-
-				if(OldZoomMethod!=NewZoomMethod)
-				{
-					if(NewZoomMethod==ZOOMPAGE_SET_OPTICAL_ZOOM)
-						g_Options|=OPTION_UseOpticalZoom;
-					else
-						g_Options&=~OPTION_UseOpticalZoom;
-
-					SaveSettingsValue(SETTINGS_VALUES_OPTIONS1,g_Options);
-				
-					ZoomPage(100,OldZoomMethod);
-					ZoomPage(ZoomFactor,NewZoomMethod);
-				}
-
-				if(returncmd>=ID_QUERO_WINDOWSIZE_640X480 && returncmd<=ID_QUERO_WINDOWSIZE_FULLSCREEN)
-				{
-					ResizeWindow(topx,topy,cxscreen,cyscreen,resizewindowflags);
-				}
-
-			} // End GetSubMenu
-
-			DestroyMenu(hMenuLoaded);
-			hPopupMenu=NULL;
-		} // End LoadMenu
-	} // End IsOperationAllowed
-}
-
-void CQToolbar::SetBlockAds(DWORD BlockAds)
-{
-	IHTMLDocument2 *pHtmlDocument;
-
-	if(IsOperationAllowed(LOCK_SetBlockAds))
-	{
-		// Save ad blocker settings in registry
-		SaveSettingsValue(SETTINGS_VALUES_BLOCKADS,BlockAds);
-		
-		// Apply new settings
-		g_BlockAds=BlockAds;
-		if(g_BlockAds&ADBLOCKER_Enable)
-		{
-			if(g_BlockAds&ADBLOCKER_BLOCK_FLASH)
-			{
-				if(GetHtmlDocument2(&pHtmlDocument))
-				{
-					HideFlashAds(pHtmlDocument,true);
-					pHtmlDocument->Release();
-				}
-			}
-		}
-		else
-		{
-			if(bTemporarilyUnblock==false) PostMessage(WM_COMMAND,IDM_REFRESH);
-		}
-	}
-}
-
 void CQToolbar::SetAutoMaximize(bool bAutoMaximize)
 {
 	if(bAutoMaximize) g_Options2|=OPTION2_AutoMaximize;
@@ -1872,37 +1471,6 @@ void CQToolbar::SetAutoMaximize(bool bAutoMaximize)
 
 	if(pQueroBroker) pQueroBroker->SetOptions(g_Options,g_Options2,UPDATE_AUTO_MAXIMIZE|UPDATE_SYNC_SETTINGS);
 	else ::ShowWindow(GetIEFrameWindow(),SW_MAXIMIZE);
-}
-
-LRESULT CQToolbar::OnShowOptions(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	UINT newOptions;
-	UINT newOptions2;
-	UINT newWarnings;
-	UINT newButtons;
-	UINT Update_Instances;
-
-	if(IsOperationAllowed(LOCK_OptionsDialog))
-	{
-		if(pQueroBroker) // Query actual NoNavBar status
-		{
-			DWORD dwValue=0;
-			if (!SUCCEEDED_OK(pQueroBroker->RegRead_DWORD(REG_VALUE_HKLM_NONAVBAR, &dwValue))) pQueroBroker->RegRead_DWORD(REG_VALUE_HKCU_NONAVBAR, &dwValue);
-			if(dwValue) g_Options|=OPTION_HideNavigationBar; else g_Options&=~OPTION_HideNavigationBar;
-		}
-
-		Update_Instances=0;
-
-		//Sheet.SetActivePage(3);
-	} // End IsOperationAllowed
-
-	bHandled=TRUE;
-	return 0;
-}
-
-LRESULT CQToolbar::OnShowZoomFactor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	return 0;
 }
 
 LRESULT CQToolbar::OnShowResizeWindow(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -2097,7 +1665,6 @@ LRESULT CQToolbar::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 			switch(LOWORD(wParam))
 			{
 			case IDM_REFRESH:
-				ResetBlockedContent();
 				m_pBrowser->Refresh();
 				bHandled=TRUE;
 				break;
@@ -2621,19 +2188,10 @@ void CQToolbar::Quero(TCHAR *pQuery, BYTE type, BYTE options, UINT newWinTab, in
 				}
 				if(options&QUERO_REDIRECT)
 				{
-					RedirectRequest.Clear();
-					RedirectRequest.SetBrowser(m_pBrowser);
-					RedirectRequest.SetURL(bstrURL);
-
-					if(vFlags.vt == VT_I4) RedirectRequest.SetFlags(vFlags.intVal);
-					if(vHeaders.vt == VT_BSTR) RedirectRequest.SetHeaders(vHeaders.bstrVal);
-
 					if(vPostData.vt&VT_ARRAY)
 					{
 						StrCchLenA(pPostData,MAXURLLENGTH,len);
-						RedirectRequest.SetPostData((ULONG)len,pPostData,true);
 					}
-
 					PostMessage(WM_QUERO_REDIRECTBROWSER);
 				}
 				else
@@ -3632,51 +3190,6 @@ void CQToolbar::SetColorScheme(int ColorSchemeId,bool bRedraw)
 	}
 }
 
-void CQToolbar::SetHighlight(bool hl)
-{
-	IHTMLDocument2 *pHtmlDocument;
-
-	if(IsOperationAllowed(LOCK_SetHighlight))
-	{
-		// Apply setting
-
-		if(hl!=Highlight)
-		{
-			Highlight=hl;
-
-			if(GetHtmlDocument2(&pHtmlDocument))
-			{
-				// Remove previous highlighting
-				if(nHighlightedWords)
-				{
-					StartSearchAnimation();
-					HighlightWords(pHtmlDocument,HighlightedWords,nHighlightedWords,HIGHLIGHT_None);
-					nHighlightedWords=0;
-					StopSearchAnimation();
-				}
-				
-				// Highlight new words
-				if(Highlight)
-				{
-					InitWords(HighlightedWords,&nHighlightedWords,INITWORDS_SearchBox|INITWORDS_History);
-					if(nHighlightedWords)
-					{
-						StartSearchAnimation();
-						HighlightWords(pHtmlDocument,HighlightedWords,nHighlightedWords,HIGHLIGHT_Highlight);
-						StopSearchAnimation();
-					}
-				}
-
-				pHtmlDocument->Release();
-			}
-		}
-
-		// Save highlight setting in registry
-		SaveSettingsValue(SETTINGS_VALUES_HIGHLIGHT,(Highlight?1:0));
-
-	} // End IsOperationAllowed
-}
-
 TCHAR* CQToolbar::trim(TCHAR *pStr)
 {
 	TCHAR *pRead,*pWrite;
@@ -4594,70 +4107,6 @@ void CQToolbar::ResetWhiteList()
 	}
 }
 
-void CQToolbar::AddToBlockedContent(BYTE Type,TCHAR *ContentURL,TCHAR *BaseURL,bool Synchronize)
-{
-	UINT i;
-
-	if(Synchronize==false || WaitForSingleObject(g_hQSharedDataMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-	{
-		trim(ContentURL);
-
-
-		if(BlockedContentIndex<BLOCKEDCONTENTSIZE && ContentURL[0])
-		{
-			BlockedContentItem *BlockedItem,*OldBlockedItem;
-
-			BlockedItem=&BlockedContent[BlockedContentIndex];
-
-			BlockedItem->Type=Type;
-			if(Type==BLOCKED_CONTENT_DIV)
-			{
-				StringCchCopy(BlockedItem->URL,MAXURLLENGTH,ContentURL);
-			}
-
-			// Add if not already in blocked content list
-
-			i=0;
-			while(i<BlockedContentIndex)
-			{
-				OldBlockedItem=&BlockedContent[i];
-				if(OldBlockedItem->Type==Type && !StrCmpI(OldBlockedItem->URL,BlockedItem->URL)) break;
-				i++;
-			}
-
-			if(i>=BlockedContentIndex) BlockedContentIndex++;
-		}
-
-		SetContentBlocked();
-
-		if(Synchronize) ReleaseMutex(g_hQSharedDataMutex);
-	}
-}
-
-void CQToolbar::SetContentBlocked()
-{
-	if(ContentBlocked==false)
-	{
-		ContentBlocked=true; 
-		UpdateEmbedButtons(false,true);
-	}
-}
-
-void CQToolbar::ResetBlockedContent()
-{
-	if(ContentBlocked)
-	{
-		if(WaitForSingleObject(g_hQSharedDataMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-		{
-			BlockedContentIndex=0;
-			ContentBlocked=false;
-			ReleaseMutex(g_hQSharedDataMutex);		
-		}
-
-		UpdateEmbedButtons(false,true);
-	}
-}
-
 #define ID_BLOCKED_DIVS 0x1000
 #define ID_BLOCKED_ADSCRIPTS 0x1001
 #define ID_BLOCK_ADS 0x1002
@@ -4665,151 +4114,6 @@ void CQToolbar::ResetBlockedContent()
 #define ID_ALLOWED_SITES 0x1004
 #define ID_TEMP_UNBLOCK 0x1005
 #define ID_HIDE_FLASH 0x1006
-
-void CQToolbar::OnContentBlockedButtonClick(POINT *point,RECT *rcExclude)
-{
-	HMENU hBlockedContentMenu;
-	TPMPARAMS tpm;
-	VARIANT vEmpty,vFlags;
-	UINT result;
-	UINT type;
-	UINT i;
-
-	BlockedContentItem bcSnapshot[BLOCKEDCONTENTSIZE];
-	TCHAR bcCaption[BLOCKEDCONTENTSIZE][MAXURLLENGTH];
-	UINT nBlockedDivs,nBlockedAdScripts;
-	UINT bcIndexSnapshot;
-
-	size_t url_size;
-	int QueryStartIndex;
-	TCHAR ch;
-	TCHAR *pUrl;
-
-	if(IsOperationAllowed(LOCK_ViewBlockedContent))
-	{
-		// Take a snapshot of the blocked content
-
-		bcIndexSnapshot=0;
-		nBlockedDivs=0;
-		nBlockedAdScripts=0;
-		type=0;
-
-		if(WaitForSingleObject(g_hQSharedDataMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-		{
-			while(type<BLOCKED_CONTENT_NTYPES) // Sort blocked content by type
-			{
-				i=0;
-				while(i<BlockedContentIndex)
-				{
-					if(BlockedContent[i].Type==type)
-					{
-						switch(type)
-						{
-						case BLOCKED_CONTENT_ADSCRIPT:
-							nBlockedAdScripts++;
-							break;
-						case BLOCKED_CONTENT_DIV:
-							nBlockedDivs++;
-							break;
-						default:
-							bcSnapshot[bcIndexSnapshot]=BlockedContent[i];
-
-							QueryStartIndex=0;
-							url_size=MAXURLLENGTH;
-							pUrl=(BlockedContent[i].URL)+QueryStartIndex;
-							ch=*pUrl;
-							while(ch && ch!=L'?')
-							{
-								QueryStartIndex++;
-								pUrl++;
-								ch=*pUrl;
-							}
-							StringCchCopyN(bcCaption[bcIndexSnapshot],MAXURLLENGTH,BlockedContent[i].URL,QueryStartIndex);
-							
-							// Truncate URL
-							if(QueryStartIndex>128) StringCchCopy(bcCaption[bcIndexSnapshot]+128,MAXURLLENGTH-12,L"...");
-
-							bcIndexSnapshot++;
-						}			
-					}
-					i++;
-				}
-				type++;
-			}
-
-			ReleaseMutex(g_hQSharedDataMutex);
-		}
-
-		hBlockedContentMenu=CreatePopupMenu();
-		if(hBlockedContentMenu)
-		{
-			i=0;
-			while(i<bcIndexSnapshot)
-			{
-				if(i && bcSnapshot[i].Type!=type && bcSnapshot[i].Type!=BLOCKED_CONTENT_IFRAME) AppendMenu(hBlockedContentMenu,MF_SEPARATOR,0,NULL);
-				AppendMenu(hBlockedContentMenu,MF_ENABLED|MF_STRING,i+1,bcCaption[i]);
-				type=bcSnapshot[i].Type;
-				i++;
-			}
-
-			if(i) AppendMenu(hBlockedContentMenu,MF_SEPARATOR,0,NULL);
-
-			if(nBlockedAdScripts)
-			{
-				StringCchPrintf(bcCaption[bcIndexSnapshot],MAXURLLENGTH,GetString(nBlockedAdScripts>1?IDS_BLOCKED_MENU_NADSCRIPTS:IDS_BLOCKED_MENU_1ADSCRIPT),nBlockedAdScripts);
-				AppendMenu(hBlockedContentMenu,MF_ENABLED|MF_STRING,ID_BLOCKED_ADSCRIPTS,bcCaption[bcIndexSnapshot]);
-				AppendMenu(hBlockedContentMenu,MF_SEPARATOR,0,NULL);
-			}
-
-			if(nBlockedDivs)
-			{
-				StringCchPrintf(bcCaption[bcIndexSnapshot],MAXURLLENGTH,GetString(nBlockedDivs>1?IDS_BLOCKED_MENU_NDIVS:IDS_BLOCKED_MENU_1DIV),nBlockedDivs);
-				AppendMenu(hBlockedContentMenu,MF_ENABLED|MF_STRING,ID_BLOCKED_DIVS,bcCaption[bcIndexSnapshot]);
-				AppendMenu(hBlockedContentMenu,MF_SEPARATOR,0,NULL);
-			}
-
-			AppendMenu(hBlockedContentMenu,g_Options2&OPTION2_HideFlashAds?MF_ENABLED|MF_CHECKED|MF_STRING:MF_ENABLED|MF_STRING,ID_HIDE_FLASH,GetString(IDS_BLOCKED_MENU_HIDE_FLASH));
-			if(g_IE_MajorVersion<9) AppendMenu(hBlockedContentMenu,g_BlockAds&ADBLOCKER_Enable?MF_ENABLED|MF_CHECKED|MF_STRING:MF_ENABLED|MF_STRING,ID_BLOCK_ADS,GetString(IDS_BLOCKED_MENU_BLOCK_ADS));
-			AppendMenu(hBlockedContentMenu,g_BlockPopUps&POPUPBLOCKER_Enable?MF_ENABLED|MF_CHECKED|MF_STRING:MF_ENABLED|MF_STRING,ID_BLOCK_POPUPS,GetString(IDS_BLOCKED_MENU_BLOCK_POPUPS));
-			i=MF_STRING;
-			if(bTemporarilyUnblock) i|=MF_CHECKED;
-			AppendMenu(hBlockedContentMenu,i,ID_TEMP_UNBLOCK,GetString(IDS_BLOCKED_MENU_TEMP_UNBLOCK));
-			AppendMenu(hBlockedContentMenu,MF_ENABLED|MF_STRING,ID_ALLOWED_SITES,GetString(IDS_BLOCKED_MENU_ALLOWED_SITES));
-
-			tpm.cbSize=sizeof TPMPARAMS;
-			tpm.rcExclude=*rcExclude;
-
-			g_MiddleClick=false;
-			result=TrackPopupMenuEx(hBlockedContentMenu,TPM_RIGHTALIGN|TPM_LEFTBUTTON|TPM_VERTICAL|TPM_RETURNCMD,point->x,point->y,m_hWnd,&tpm);
-			DestroyMenu(hBlockedContentMenu);
-
-			switch(result)
-			{
-			case ID_BLOCKED_ADSCRIPTS:
-			case ID_BLOCKED_DIVS:
-			case ID_ALLOWED_SITES:
-				break;
-			case ID_TEMP_UNBLOCK:
-				TemporarilyUnblockCurrentDomain(!bTemporarilyUnblock,bTemporarilyUnblock,true);
-				if(bTemporarilyUnblock) PostMessage(WM_COMMAND,IDM_REFRESH);
-				else SendMessage(WM_QUERO_TOOLBAR_COMMAND,QUERO_COMMAND_HIDEFLASHADS,0);
-				UpdateQueroInstances(UPDATE_TEMP_UNBLOCK);
-				break;
-			default:
-				if(result>0 && result<=bcIndexSnapshot)
-				{
-					UINT newWinTab=GetNewWinTabKeyState(g_MiddleClick?SHORTCUT_OPTION_MIDDLECLICK:SHORTCUT_OPTION_DEFAULT,OPEN_NewTab);
-
-					VariantInit(&vEmpty);
-					vFlags.vt=VT_I4;
-					vFlags.intVal=MapNewWinTabToNavOpen(newWinTab);
-			
-					if(m_pBrowser) m_pBrowser->Navigate(CComBSTR(bcSnapshot[result-1].URL),&vFlags,&vEmpty,&vEmpty,&vEmpty);
-				}
-			}
-		}
-	} // End IsOperationAllowed
-}
 
 void CQToolbar::TemporarilyUnblockCurrentDomain(bool bUnblock,bool bRemoveFromAllInstances,bool bSynchronize)
 {
@@ -5118,7 +4422,6 @@ void CQToolbar::OnNavigateBrowser(TCHAR *newurl,bool first)
 	if(Highlight)
 	{
 		InitWords(HighlightedWords,&nHighlightedWords,INITWORDS_SearchBox|INITWORDS_History);
-		if(nHighlightedWords) SetTimer(ID_HIGHLIGHT_TIMER,HIGHLIGHT_REFRESH_INTERVAL);
 	}
 }
 
@@ -5186,12 +4489,6 @@ void CQToolbar::OnNewWindow3(IDispatch **ppDisp,VARIANT_BOOL *pCancel,DWORD dwFl
 		
 			// Check if pop-up override key is pressed or pop-up is from a proxy (0x80 from IE itself)
 			if(dwFlags&(0x0008|0x0040|0x0080)) bAllowPopUp=true;
-		
-			// Check if current domain is in whitelist
-			if(bAllowPopUp==false)
-			{		
-				if(GetWhiteListBlockPopUps(bstrUrl)==false) bAllowPopUp=true;
-			}
 		}
 	}
 	else bAllowPopUp=true;
@@ -5203,7 +4500,6 @@ void CQToolbar::OnNewWindow3(IDispatch **ppDisp,VARIANT_BOOL *pCancel,DWORD dwFl
 	}
 	else
 	{
-		if(bstrUrl) AddToBlockedContent(BLOCKED_CONTENT_POPUP,bstrUrl,NULL,false);
 		PopupBlocked();
 		*pCancel=VARIANT_TRUE;
 	}
@@ -5381,8 +4677,6 @@ bool CQToolbar::CheckIDN(TCHAR *url_decoded,int hoststartidx,int hostendidx,int 
 			newlabel=true;
 
 			pURL=pHost;
-
-			if(suspicious) if(ShowSecurityWarning(WARNING_DIALOG_IDN,pHost,hostlen,0)) return true;
 		}
 
 		if(g_Warnings&WARNING_ASCIIRULES_VIOLATION)
@@ -5493,74 +4787,12 @@ bool CQToolbar::CheckIDN(TCHAR *url_decoded,int hoststartidx,int hostendidx,int 
 				}
 			}
 			else missglyphs=false;
-
 			ReleaseDC(hDC);
-
-			if(missglyphs) if(ShowSecurityWarning(WARNING_DIALOG_MISSGLYPHS,pHost,hostlen,0)) return true;
 		}
 	}
 #endif
 
 	return false;
-}
-
-bool CQToolbar::ShowSecurityWarning(int WarningDialog,TCHAR *pHost,int HostLen,int WL_HostStartIndex)
-{
-	const UINT WarnTitle[4]={IDS_WARN_IDN_TITLE,IDS_WARN_ILLEGAL_URL_TITLE,IDS_WARN_MISSGLYPHS_TITLE,IDS_WARN_ASCIIRULES_VIOLATION_TITLE};
-	const UINT WarnDesc[4]={IDS_WARN_IDN_DESC,IDS_WARN_ILLEGAL_URL_DESC,IDS_WARN_MISSGLYPHS_DESC,IDS_WARN_ASCIIRULES_VIOLATION_DESC};
-	const SHORT Allow[4]={WL_ALLOW_IDN,0,WL_ALLOW_MISSGLYPHS,WL_ALLOW_IDN};
-
-	TCHAR desc[3*255];
-	TCHAR host[255+1];
-	size_t url_len;
-	bool result;
-	RECT rect;
-	bool EnableAddToWL;
-	bool EnableProceed;
-
-	StringCbCopy(desc,sizeof desc,GetString(WarnDesc[WarningDialog]));
-	if(WarningDialog!=WARNING_DIALOG_ILLEGAL_URL)
-	{
-		StringCbCopyN(host,sizeof host,pHost,HostLen*sizeof(TCHAR));
-		StringCbCat(desc,sizeof desc,host);
-
-		if(WarningDialog!=WARNING_DIALOG_ASCIIRULES_VIOLATION)
-		{
-			StringCbCat(desc,sizeof desc,L"\r\n");
-
-			url_len=MAXURLLENGTH;
-			StringCbCat(desc,sizeof desc,host);
-		}
-		
-		PreviewIDN=true;
-		m_ComboQuero.RedrawWindow(NULL,NULL,RDW_INVALIDATE|RDW_NOERASE);
-		::ShowWindow(m_ComboQuero.m_hWndEdit,SW_HIDE);
-
-		EnableAddToWL=true;
-		EnableProceed=true;
-	}
-	else
-	{
-		StringCbCat(desc,sizeof desc,pHost);
-
-		EnableAddToWL=false;
-		EnableProceed=false;
-	}
-
-	if(g_Restrictions&LOCK_WhiteList) EnableAddToWL=false;
-
-	m_ComboQuero.GetClientRect(&rect);
-	m_ComboQuero.ClientToScreen(&rect);
-
-
-	if(WarningDialog!=WARNING_DIALOG_ILLEGAL_URL)
-	{
-		PreviewIDN=false;
-		m_ComboQuero.RedrawWindow(NULL,NULL,RDW_INVALIDATE|RDW_NOERASE);
-		::ShowWindow(m_ComboQuero.m_hWndEdit,SW_SHOW);
-	}
-	
-	return result;
 }
 
 bool CQToolbar::HasMissingGlyphs(HDC hDC,TCHAR *pHost,int len)
@@ -5669,84 +4901,7 @@ USHORT CQToolbar::GetWhiteListPermits(TCHAR *url,TCHAR *host,int hostlen)
 	return Permits;
 }
 
-UINT CQToolbar::GetWhiteListBlockAds(TCHAR *url)
-{
-	USHORT Permits;
-	UINT BlockAds;
-
-	BlockAds=g_BlockAds;
-
-	if(url)
-	{
-		size_t url_len;
-
-		url_len=MAXURLLENGTH;
-		Permits=0;
-	}
-	else Permits=GetWhiteListPermits(currentURL,currentURL+HostStartIndex,HostEndIndex-HostStartIndex);
-
-	// Mask allowed content
-	BlockAds&=~((Permits>>4)&0xFE);
-
-	// Disable Ad Blocker if nothing to block
-	if((BlockAds&ADBLOCKER_BLOCK_ALL)==0) BlockAds&=~ADBLOCKER_Enable;
-
-	//QDEBUG_PRINTF(L"GetWhiteListBlockAds",L"%x %s",BlockAds,url?url:currentURL);
-
-	return BlockAds;
-}
-
-bool CQToolbar::GetWhiteListBlockPopUps(TCHAR *PopUpURL)
-{
-	USHORT Permits;
-	bool bBlockPopUps;
-
-	bBlockPopUps=true;
-
-	Permits=GetWhiteListPermits(currentURL,currentURL+HostStartIndex,HostEndIndex-HostStartIndex);
-	bBlockPopUps=(Permits&WL_ALLOW_POPUPS)==0;
-
-	if(bBlockPopUps && PopUpURL)
-	{
-		size_t url_len;
-
-		url_len=MAXURLLENGTH;
-		Permits=0;
-
-		bBlockPopUps=(Permits&WL_ALLOW_POPUPS)==0;
-	}
-
-	return bBlockPopUps;
-}
-
 #define NADIMAGESIZES 11
-
-int CQToolbar::IsAdImageSize(int ImgWidth,int ImgHeight)
-{
-	const SIZE AdImageSizes[NADIMAGESIZES]={
-		{106,50},
-		{300,250},
-		{120,60},
-		{728,90},
-		{468,60},
-		{114,23},
-		{120,600},
-		{160,600},
-		{250,250},
-		{234,60},
-		{336,280}
-	};
-
-	int i;
-
-	i=0;
-	while(i<NADIMAGESIZES && (AdImageSizes[i].cx!=ImgWidth || AdImageSizes[i].cy!=ImgHeight)) i++;
-
-	if(i>=NADIMAGESIZES) i=0;
-	else i++;
-
-	return i;
-}
 
 #define NFILTERPATTERNS 2
 #define FILTERPATTERN_SIZE 0
@@ -5754,196 +4909,7 @@ int CQToolbar::IsAdImageSize(int ImgWidth,int ImgHeight)
 #define MAX_FILTER_LABELS 64
 #define MAX_FILTER_LABEL_LEN 16
 #define NLABELDELIMITERS 8
-
-bool CQToolbar::IsAdURL(TCHAR *ContentURL,TCHAR *BaseURL,BYTE context)
-{
-	TCHAR ContentURL_LowerCase[MAXURLLENGTH];
-	TCHAR Labels[MAX_FILTER_LABELS][MAX_FILTER_LABEL_LEN];
-
-	const TCHAR *URL_FilterPatterns[NFILTERPATTERNS]={L"000x00",L"banner"};
-
-	const TCHAR *URL_FilterLabels[NFILTERLABELS]={L"2mdn",L"ad",L"ad0",L"adbrite",L"adim*",L"adpic*",L"ads*",
-		L"adtech*",L"adtology*",L"adv",L"advert*",L"adview",L"atdmt",L"atwola",L"doubleclick",L"etology",L"fastclick",L"falkag",
-		L"googlesyn*",L"infolinks",L"intellitxt",L"kontera",L"mediaplex",L"mpnrs",L"pagead",L"pheedo",
-		L"sponsorads",L"tribalfusion",L"viewad",L"yieldmanager",L"zedo"
-	}; // Sorted list
-
-	const TCHAR Delimiters[NLABELDELIMITERS+1]=L"_=;:/.-*";  // Sorted descending
-	TCHAR *pURL;
-	TCHAR ch,ch2,chFilterPattern;
-	TCHAR ImageSize[8];
-	bool bCharacterMatch;
-	int nLabels;
-	int i,j,k,l,m;
-
-	// Make absolute URL
-
-	MakeAbsoluteURL(ContentURL_LowerCase,ContentURL,BaseURL);
-
-	// Lower-case URL
-
-	CharLower(ContentURL_LowerCase);
-
-	// Extract Labels
-
-	nLabels=0;
-	i=0;
-	pURL=ContentURL_LowerCase;
-	ch=*pURL;
-	while(ch && ch!=L'?')
-	{
-		j=0;
-		do ch2=Delimiters[j++]; while(ch<ch2);
-		if(ch==ch2)
-		{
-			if(i)
-			{
-				Labels[nLabels++][i]=L'\0';
-				i=0;
-				if(nLabels>=MAX_FILTER_LABELS) break;
-			}
-		}
-		else if(i<MAX_FILTER_LABEL_LEN-1) Labels[nLabels][i++]=ch;
-
-		pURL++;
-		ch=*pURL;
-	}
-	if(i) Labels[nLabels++][i]=L'\0';
-
-	// Match labels
-
-	i=1; // Skip leading URL scheme label
-	while(i<nLabels)
-	{
-		j=0;
-		while(j<NFILTERLABELS)
-		{
-			k=0;
-			l=i;
-			m=0;
-		
-			do
-			{
-				ch=Labels[l][m];
-				chFilterPattern=URL_FilterLabels[j][k];
-				if(chFilterPattern==L'0')
-				{
-					bCharacterMatch=(ch>=L'0' && ch<=L'9');
-				}
-				else if(chFilterPattern==L'.')
-				{
-					l++;
-					m=-1;
-					bCharacterMatch=true;
-				}
-				else bCharacterMatch=(ch==chFilterPattern);
-				m++;
-				k++;
-			} while(bCharacterMatch && ch);
-
-			if((ch==L'\0' && chFilterPattern==L'\0') || chFilterPattern==L'*')
-			{
-				return true;
-			}
-			else if(ch<chFilterPattern) break; // URL_FilterLabels alphabetically sorted
-
-			j++;
-		}
-
-		i++;
-	}
-
-	// Match patterns and extract image dimensions
-
-	pURL=ContentURL_LowerCase;
-	ch=*pURL;
-	while(ch && ch!=L'?')
-	{
-		i=(context&ISADURL_CONTEXT_EXTRACT_SIZE)?0:1;
-
-		while(i<NFILTERPATTERNS)
-		{
-			j=0;
-			ch2=ch;
-
-			do
-			{
-				chFilterPattern=URL_FilterPatterns[i][j];
-
-				if(chFilterPattern==L' ')
-				{
-					bCharacterMatch=(ch2==L'.' || ch2==L'/' || ch2==L'-' || ch2==L'_' || (j>3 && isdigit(ch2)));
-				}
-				else if(chFilterPattern==L'0')
-				{
-					bCharacterMatch=(ch2>=L'0' && ch2<=L'9');
-					if(i==FILTERPATTERN_SIZE) ImageSize[j]=ch2;
-				}
-				else bCharacterMatch=(chFilterPattern==ch2);
-
-				if(bCharacterMatch)
-				{
-					j++;
-					ch2=pURL[j];
-				}
-			} while(bCharacterMatch && ch2);
-
-			if(chFilterPattern==L'\0')
-			{
-				if(i!=FILTERPATTERN_SIZE) return true;
-				else
-				{
-					int ImgWidth,ImgHeight;
-
-					ImageSize[3]=L'x';
-					if(ch2>=L'0' && ch2<=L'9') ImageSize[j++]=ch2;
-					ImageSize[j]=L'\0';
-
-					ImgWidth=StrToInt(ImageSize);
-					ImgHeight=StrToInt(ImageSize+4);
-
-
-					if(IsAdImageSize(ImgWidth,ImgHeight)) return true;
-				}
-			}
-
-			i++;
-		}
-
-		pURL++;
-		ch=*pURL;
-	}
-
-	return false;
-}
-
 #define NVIDEOPLAYERURLS 8
-
-bool CQToolbar::IsVideoPlayerURL(TCHAR *ContentURL)
-{
-	bool result;
-	size_t url_len;
-
-	const struct WhiteListEntry VideoPlayerWhiteList[NVIDEOPLAYERURLS]={
-		{L"youtube.com",11,WL_ALLOW_FLASH,0},
-		{L"ytimg.com",9,WL_ALLOW_FLASH,0},
-		{L"youtube-nocookie.com",20,WL_ALLOW_FLASH,0},
-		{L"vimeo.com",9,WL_ALLOW_FLASH,0},
-		{L"vimeocdn.com",12,WL_ALLOW_FLASH,0},
-		{L"facebook.com",12,WL_ALLOW_FLASH,0},
-		{L"fbcdn.net",9,WL_ALLOW_FLASH,0},
-		{L"fbstatic-a.akamaihd.net",23,WL_ALLOW_FLASH,0}
-	};
-
-	UINT VideoPlayerWhiteListIndex;
-
-	VideoPlayerWhiteListIndex=NVIDEOPLAYERURLS;
-
-	url_len=MAXURLLENGTH;
-	result=false;
-
-	return result;
-}
 
 void CQToolbar::OnNavigateError(TCHAR *url,long StatusCode,SHORT *Cancel)
 {
@@ -6046,9 +5012,6 @@ void CQToolbar::OnBeforeNavigate(IDispatch *pDisp,VARIANT *vUrl,VARIANT *vFlags,
 			if(toplevel) // Handle top-level navigations only
 			{
 				NavigationFailed=false;
-
-				ResetBlockedContent();
-
 				StringCbCopy(beforeURL,sizeof beforeURL,newurl);
 				BeforeHostStartIndex=0;
 				BeforeHostEndIndex=0;
@@ -6266,8 +5229,6 @@ bool CQToolbar::NavigateUp_Available()
 
 LRESULT CQToolbar::OnRedirectBrowser(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	RedirectRequest.Navigate();
-
 	bHandled=TRUE;
 	return 0;
 }
@@ -6568,7 +5529,6 @@ void CQToolbar::FindOnPage(BYTE initiatedBy,BYTE findOptions)
 					if(Highlight && initiatedBy!=FIND_INITIATED_BY_QueroMenu && (nHighlightedWords!=1 || StrCmpI(pFindText,HighlightedWords[0])))
 					{
 						// Unhighlight HighlightedWords
-						if(nHighlightedWords) HighlightWords(pHtmlDocument,HighlightedWords,nHighlightedWords,HIGHLIGHT_None);
 
 						// Initialize HighlightedWords with find phrase
 						StringCchCopy(HighlightedWords[0],MAXWORDLENGTH,pFindText);
@@ -6576,18 +5536,6 @@ void CQToolbar::FindOnPage(BYTE initiatedBy,BYTE findOptions)
 
 						// Unselect current selection
 						pHtmlDocument->execCommand(CComBSTR(L"Unselect"),VARIANT_FALSE,vEmpty,&bExec);
-
-						// Highlight new find phrase
-						if(HighlightWords(pHtmlDocument,HighlightedWords,nHighlightedWords,blurFocus?HIGHLIGHT_Highlight|HIGHLIGHT_ScrollToFirst|HIGHLIGHT_Focus:HIGHLIGHT_Highlight|HIGHLIGHT_ScrollToFirst))
-						{							
-							Find_Occurence=0;
-							for(int i=0;i<MAXFRAMEDEPTH;i++) Find_LastFrameDocument[i]=FRAME_UNDEFINED;
-							SetPhraseNotFound(false);
-						}
-						else // Phrase not found
-						{
-							SetPhraseNotFound(true);
-						}
 					}
 					else // Find first or last occurence
 					{
@@ -6660,207 +5608,6 @@ void CQToolbar::FindOnPage(BYTE initiatedBy,BYTE findOptions)
 		}
 		MessageBeep(MB_ICONEXCLAMATION);
 	}
-}
-
-void CQToolbar::QuickFind(TCHAR *pSearchText)
-{
-	IHTMLDocument2 *pHtmlDocument;
-
-	trim(pSearchText);
-
-	if(StrCmpI(LastFoundText,pSearchText))
-	{
-		if(pSearchText[0]!=L'\0')
-		{
-			if(GetHtmlDocument2(&pHtmlDocument))
-			{
-				/*
-				// Unhighlight HighlightedWords
-				if(nHighlightedWords) HighlightWords(pHtmlDocument,HighlightedWords,nHighlightedWords,HIGHLIGHT_None);
-
-				// Initialize HighlightedWords with find phrase
-				StringCchCopy(HighlightedWords[0],MAXWORDLENGTH,pSearchText);
-				nHighlightedWords=1;
-
-				// Reset Find_Occurence
-				Find_Occurence=0;
-				for(int i=0;i<MAXFRAMEDEPTH;i++) Find_LastFrameDocument[i]=FRAME_UNDEFINED;
-
-				if(HighlightWords(pHtmlDocument,HighlightedWords,nHighlightedWords,HIGHLIGHT_Highlight|HIGHLIGHT_ScrollToFirst))
-				*/
-
-				if(FindText(pHtmlDocument,pSearchText,0,FIND_First,0))
-				{
-					StringCbCopy(LastFoundText,sizeof LastFoundText,pSearchText);
-					PutStatusText(NULL);
-					SetPhraseNotFound(false);
-				}
-				else
-				{
-					if(!PhraseNotFound)
-					{
-						VARIANT_BOOL bExec;
-						VARIANT vEmpty;
-
-						VariantInit(&vEmpty);
-						pHtmlDocument->execCommand(CComBSTR(L"Unselect"),VARIANT_FALSE,vEmpty,&bExec);
-					}
-					SetPhraseNotFound(true);
-					PutStatusText(GetString(IDS_FIND_NOTFOUND));
-				}
-
-				pHtmlDocument->Release();
-			}
-		}
-	}
-}
-
-bool CQToolbar::HighlightWords(IHTMLDocument2 *pHtmlDocument,TCHAR Words[MAXWORDS][MAXWORDLENGTH],int nWords,BYTE highlightOptions)
-{
-	IHTMLElement *pBodyElm=NULL;
-	IHTMLBodyElement *pBody=NULL;
-	IHTMLTxtRange *pTxtRange=NULL;
-	HRESULT hr;
-	bool result;
-	const static TCHAR* HighlightColors[10]={L"#FDFF69",L"#69FF69",L"#69FFFD",L"#FF7D7D",L"FD69FF",L"#91CAFF",L"#FFB069",L"69FFC1",L"#B9C0FF",L"#D0CAC0"};
-
-	result=false;
-
-	if(pHtmlDocument && nWords)
-	{
-		hr=pHtmlDocument->get_body(&pBodyElm);
-		
-		if(SUCCEEDED_OK(hr) && pBodyElm)
-		{
-			hr=pBodyElm->QueryInterface(IID_IHTMLBodyElement,(LPVOID*)&pBody);
-
-			if(SUCCEEDED_OK(hr) && pBody)
-			{
-				long t,flags;
-				int i;
-				VARIANT_BOOL bFound,bExec;
-				VARIANT vEmpty;
-
-				hr=pBody->createTextRange(&pTxtRange);
-				
-				if(SUCCEEDED_OK(hr) && pTxtRange)
-				{
-					CComBSTR move_character(L"character");
-					CComBSTR cmd_BackColor(L"BackColor");
-					CComBSTR cmd_ForeColor(L"ForeColor");
-
-					vEmpty.vt=VT_BSTR;
-					vEmpty.bstrVal=NULL;
-				
-					for(i=0;i<nWords;i++)
-					{
-						CComBSTR search(Words[i]);
-						
-						pTxtRange->moveStart(move_character,-0xffffff,&t);
-
-						if(search.Length()<3) flags=2; // 2 match whole words only
-						else flags=0;
-
-						hr=pTxtRange->findText(search,0xffffff,flags,&bFound);
-
-						while(SUCCEEDED_OK(hr) && bFound==VARIANT_TRUE)
-						{
-							// Test if selection can be highlighted
-							hr=pTxtRange->queryCommandEnabled(cmd_BackColor,&bExec);
-							if(SUCCEEDED_OK(hr) && bExec==VARIANT_TRUE)
-							{
-								result=true;
-								if(highlightOptions&HIGHLIGHT_ScrollToFirst)
-								{
-									if(SUCCEEDED_OK(pTxtRange->scrollIntoView(VARIANT_FALSE)))
-									{
-										if(highlightOptions&HIGHLIGHT_Focus)
-										{
-											// Move focus to html window
-											SetFocusOnParentWindow(pHtmlDocument);
-										}
-										highlightOptions&=~HIGHLIGHT_ScrollToFirst;
-									}
-								}
-								if(highlightOptions&HIGHLIGHT_Highlight)
-								{
-									pTxtRange->execCommand(cmd_BackColor,VARIANT_FALSE,CComVariant(HighlightColors[(g_Options2&OPTION2_HighlightInDifferentColors)?i%10:0]),&bExec);
-									// Workaround: if ForeColor is set to black (#000000), ForeColor is not removed when set to vEmpty
-									pTxtRange->execCommand(cmd_ForeColor,VARIANT_FALSE,CComVariant(L"#101010"),&bExec);
-								}
-								else
-								{
-									pTxtRange->execCommand(cmd_BackColor,VARIANT_FALSE,vEmpty,&bExec);
-									pTxtRange->execCommand(cmd_ForeColor,VARIANT_FALSE,vEmpty,&bExec);
-								}
-							}
-												
-							pTxtRange->move(move_character,1,&t);
-							hr=pTxtRange->findText(search,0xffffff,flags,&bFound);
-						}				
-					}
-					pTxtRange->Release();
-				}
-				pBody->Release();
-			}
-			pBodyElm->Release();
-		}
-
-		// Search frames
-
-		IHTMLFramesCollection2 *frames = NULL;
-		hr=pHtmlDocument->get_frames(&frames);
-
-		if(SUCCEEDED_OK(hr) && frames)
-		{
-			int i;
-			long n;
-
-			IHTMLDocument2* pFrameDocument;
-
-			if(SUCCEEDED_OK(frames->get_length(&n)))
-			{
-				i=0;
-
-				while(i<n)
-				{
-					pFrameDocument=GetFrameDocument(frames,i);
-					if(pFrameDocument)
-					{
-						if(HighlightWords(pFrameDocument,Words,nWords,highlightOptions)) result=true;
-										
-						pFrameDocument->Release();
-					}					
-					i++;
-				}
-			}
-
-			frames->Release();
-		
-		} // End frames
-	} // End function arguments valid
-
-	return result;
-}
-
-bool CQToolbar::HighlightWord(TCHAR *pWord)
-{	
-	IHTMLDocument2 *pHtmlDocument;
-	bool found;
-
-	if(pWord[0] && GetHtmlDocument2(&pHtmlDocument))
-	{
-		if(nHighlightedWords) HighlightWords(pHtmlDocument,HighlightedWords,nHighlightedWords,HIGHLIGHT_None);
-
-		StringCchCopy(HighlightedWords[0],MAXWORDLENGTH,pWord);
-		nHighlightedWords=1;
-
-		found=HighlightWords(pHtmlDocument,HighlightedWords,nHighlightedWords,HIGHLIGHT_Highlight);
-		pHtmlDocument->Release();
-	}
-	else found=false;
-
-	return found;
 }
 
 bool CQToolbar::IsFocusOnInput(IHTMLDocument2 *pHtmlDocument)
@@ -7269,49 +6016,6 @@ void CQToolbar::SetZoomFactor(UINT NewZoomFactor,bool bUpdateZoomFactor)
 	}
 }
 
-bool CQToolbar::HideFlashAds(IHTMLDocument2 *pHtmlDocument,bool bHide)
-{
-	HRESULT hr;
-	bool result=false;
-
-	if(pHtmlDocument)
-	{
-		BlockObject(pHtmlDocument,L"D27CDB6E-AE6D-11CF-96B8-444553540000",L"SHOCKWAVE",bHide);
-		BlockEmbed(pHtmlDocument,L".SWF",L"SHOCKWAVE",bHide);
-
-		IHTMLFramesCollection2 *frames = NULL;
-		hr=pHtmlDocument->get_frames(&frames);
-
-		if(SUCCEEDED_OK(hr) && frames)
-		{
-			long n;
-
-			hr=frames->get_length(&n);
-			if(SUCCEEDED_OK(hr))
-			{
-				IHTMLDocument2* pFrameDocument;
-			
-				int i=0;
-
-				while(i<n)
-				{
-					pFrameDocument=GetFrameDocument(frames,i);
-					if(pFrameDocument)
-					{
-						if(HideFlashAds(pFrameDocument,bHide)) result=true;
-						pFrameDocument->Release();
-					}					
-					i++;
-				}
-			}
-
-			frames->Release();
-		} // End frames
-	} // End pHtmlDocument
-
-	return result;
-}
-
 HRESULT CQToolbar::GetElementCollection(BSTR pTagName,IHTMLDocument2* pHtmlDocument,IHTMLElementCollection** ppElementColl)
 {
 	HRESULT hr;
@@ -7334,288 +6038,6 @@ HRESULT CQToolbar::GetElementCollection(BSTR pTagName,IHTMLDocument2* pHtmlDocum
 		}
 
 		pElementCollAll->Release();
-	}
-	return hr;
-}
-
-HRESULT CQToolbar::BlockObject(IHTMLDocument2* pHtmlDocument,TCHAR* pClassId,TCHAR* pType,bool bHide)
-{
-	HRESULT hr;
-	IHTMLElementCollection *pElementCol;
-	TCHAR ContentURL[MAXURLLENGTH];
-
-	hr=GetElementCollection(CComBSTR(L"OBJECT"),pHtmlDocument,&pElementCol);
-	if(SUCCEEDED_OK(hr) && pElementCol)
-	{
-		long n;
-		
-		hr=pElementCol->get_length(&n);
-		if(SUCCEEDED_OK(hr))
-		{
-			long i=0;
-			VARIANT vIdx;
-
-			vIdx.vt=VT_I4;
-
-			while(i<n)
-			{
-				IDispatch* pItemDisp;
-				IHTMLObjectElement* pObjectElement;
-
-				vIdx.intVal=i;
-				hr=pElementCol->item(vIdx,vIdx,&pItemDisp);
-				if(SUCCEEDED_OK(hr) && pItemDisp)
-				{
-					hr=pItemDisp->QueryInterface(IID_IHTMLObjectElement,(LPVOID*)&pObjectElement);
-					if(SUCCEEDED_OK(hr) && pObjectElement)
-					{
-						BSTR bstrObjClassId=NULL;
-						bool bObjectMatch=false;
-
-						// Check CLSID
-						hr=pObjectElement->get_classid(&bstrObjClassId);
-						if(SUCCEEDED_OK(hr) && bstrObjClassId)
-						{
-							CharUpper(bstrObjClassId);
-							if(StrStr(bstrObjClassId,pClassId)) bObjectMatch=true;
-							SysFreeString(bstrObjClassId);
-						}
-
-						// Check type
-						if(!bObjectMatch)
-						{
-							BSTR bstrObjType=NULL;
-
-							hr=pObjectElement->get_type(&bstrObjType);
-							if(SUCCEEDED_OK(hr) && bstrObjType)
-							{
-								CharUpper(bstrObjType);
-								if(StrStr(bstrObjType,pType)) bObjectMatch=true;
-								SysFreeString(bstrObjType);
-							}	
-						}
-
-						if(bObjectMatch)
-						{
-							BSTR bstrSource=NULL;
-							ContentURL[0]=0;
-
-							// Find the content URL
-
-							hr=pObjectElement->get_data(&bstrSource);
-							if(SUCCEEDED_OK(hr) && bstrSource)
-							{
-								StringCbCopy(ContentURL,sizeof ContentURL,bstrSource);								
-								SysFreeString(bstrSource);
-							}
-							else
-							{
-								IHTMLElement2 *pHtmlElement2;
-
-								hr=pObjectElement->QueryInterface(IID_IHTMLElement2,(LPVOID*)&pHtmlElement2);
-								if(SUCCEEDED_OK(hr))
-								{
-									IHTMLElementCollection *pElementColParam;
-
-									hr=pHtmlElement2->getElementsByTagName(CComBSTR(L"PARAM"),&pElementColParam);
-									if(SUCCEEDED_OK(hr) && pElementColParam)
-									{
-										IDispatch* pItemDispParam;
-										IHTMLParamElement* pParamElement;
-										long j=0,m;
-
-										hr=pElementColParam->get_length(&m);
-										if(SUCCEEDED_OK(hr))
-										{
-											while(j<m)
-											{
-												vIdx.intVal=j;
-												hr=pElementColParam->item(vIdx,vIdx,&pItemDispParam);
-												if(SUCCEEDED_OK(hr) && pItemDispParam)
-												{
-													hr=pItemDispParam->QueryInterface(IID_IHTMLParamElement,(LPVOID*)&pParamElement);
-													if(SUCCEEDED_OK(hr) && pParamElement)
-													{
-														BSTR bstrName=NULL;
-
-														hr=pParamElement->get_name(&bstrName);
-														if(SUCCEEDED_OK(hr) && bstrName)
-														{
-															if(!StrCmpI(bstrName,L"movie") || !StrCmpI(bstrName,L"src"))
-															{
-																hr=pParamElement->get_value(&bstrSource);
-																if(SUCCEEDED_OK(hr) && bstrSource)
-																{
-																	if(bstrSource[0]!=L'\0')
-																	{
-																		StringCbCopy(ContentURL,sizeof ContentURL,bstrSource);
-																		j=m; // break
-																	}
-																	SysFreeString(bstrSource);
-																}
-															}
-															SysFreeString(bstrName);
-														}
-														pParamElement->Release();
-													}
-													pItemDispParam->Release();
-												}
-												j++;
-											}
-										}
-										pElementColParam->Release();
-									}
-									pHtmlElement2->Release();
-								}
-							}
-
-							// Test for video player and finally hide the flash object
-
-							if(!IsVideoPlayerURL(ContentURL) && StrCmp(ContentURL,currentURL)!=0)
-							{
-								if(bHide && ContentURL[0]) AddToBlockedContent(BLOCKED_CONTENT_FLASH,ContentURL,NULL,true);
-								HideHtmlElement(pObjectElement,bHide);
-							}
-						}
-
-						pObjectElement->Release();
-					}
-
-					pItemDisp->Release();
-				}
-				i++;
-			} // End of collection enumeration
-		}
-		pElementCol->Release();
-	}
-	return hr;
-}
-
-HRESULT CQToolbar::BlockEmbed(IHTMLDocument2* pHtmlDocument,TCHAR* pFileExt,TCHAR *pType,bool bHide)
-{
-	HRESULT hr;
-	IHTMLElementCollection *pElementCol;
-
-	hr=GetElementCollection(CComBSTR(L"EMBED"),pHtmlDocument,&pElementCol);
-	if(SUCCEEDED_OK(hr) && pElementCol)
-	{
-		long n;
-		
-		hr=pElementCol->get_length(&n);
-		if(SUCCEEDED_OK(hr))
-		{
-			long i=0;
-			VARIANT vIdx;
-
-			vIdx.vt=VT_I4;
-
-			while(i<n)
-			{
-				IDispatch* pItemDisp;
-				IHTMLEmbedElement* pEmbedElement;
-				IHTMLElement* pElement;
-
-				bool bMatch;				
-				BSTR bstrSource;
-				BSTR bstrHtml;
-
-				vIdx.intVal=i;
-				hr=pElementCol->item(vIdx,vIdx,&pItemDisp);
-				if(SUCCEEDED_OK(hr) && pItemDisp)
-				{
-					hr=pItemDisp->QueryInterface(IID_IHTMLEmbedElement,(LPVOID*)&pEmbedElement);
-					if(SUCCEEDED_OK(hr) && pEmbedElement)
-					{
-						// Check source
-						bstrSource=NULL;
-						hr=pEmbedElement->get_src(&bstrSource);
-						if(SUCCEEDED_OK(hr) && bstrSource)
-						{
-							TCHAR ContentURL[MAXURLLENGTH];
-
-							StringCbCopy(ContentURL,sizeof ContentURL,bstrSource);
-							if(!IsVideoPlayerURL(ContentURL) && StrCmp(ContentURL,currentURL)!=0)
-							{
-								CharUpper(bstrSource);
-								bMatch=(StrStr(bstrSource,pFileExt)!=NULL);
-								
-								// Check type
-								if(bMatch==false)
-								{
-									hr=pEmbedElement->QueryInterface(IID_IHTMLElement,(LPVOID*)&pElement);
-									if(SUCCEEDED_OK(hr) && pElement)
-									{
-										bstrHtml=NULL;
-										hr=pElement->get_outerHTML(&bstrHtml);
-										if(SUCCEEDED_OK(hr) && bstrHtml)
-										{
-											CharUpper(bstrHtml);
-											bMatch=(StrStr(bstrHtml,pType)!=NULL);
-											SysFreeString(bstrHtml);
-										}
-										pElement->Release();
-									}
-								}
-
-								if(bMatch)
-								{
-									if(bHide) AddToBlockedContent(BLOCKED_CONTENT_FLASH,ContentURL,NULL,true);
-									HideHtmlElement(pEmbedElement,bHide);
-								}
-							} // End !IsVideoPlayerURL
-							
-							SysFreeString(bstrSource);
-						}
-
-						pEmbedElement->Release();
-					}
-
-					pItemDisp->Release();
-				}
-				i++;
-			} // End of collection enumeration
-		}
-		pElementCol->Release();
-	}
-	return hr;
-}
-
-/*
-HRESULT CQToolbar::RemoveHtmlElement(IHTMLDocument2* pHtmlDocument,IHTMLElement* pHtmlElement)
-{
-	HRESULT hr;
-	IMarkupServices* pMarkupServices;
-
-	hr=pHtmlDocument->QueryInterface(IID_IMarkupServices,(LPVOID*)&pMarkupServices);
-	if(SUCCEEDED_OK(hr) && pMarkupServices)
-	{
-		hr=pMarkupServices->RemoveElement(pHtmlElement);
-		pMarkupServices->Release();
-	}
-	return hr;
-}
-*/
-
-HRESULT CQToolbar::HideHtmlElement(IDispatch* pElementDisp,bool bHide)
-{
-	HRESULT hr;
-	IHTMLElement* pHtmlElement;
-
-	hr=pElementDisp->QueryInterface(IID_IHTMLElement,(LPVOID*)&pHtmlElement);
-	if(SUCCEEDED_OK(hr) && pHtmlElement)
-	{
-		IHTMLStyle* pStyle;
-
-		hr=pHtmlElement->get_style(&pStyle);
-		if(SUCCEEDED_OK(hr) && pStyle)
-		{
-			if(bHide) pStyle->put_visibility(CComBSTR(L"hidden"));
-			else pStyle->put_visibility(CComBSTR(L"inherit"));
-
-			pStyle->Release();
-		}
-
-		pHtmlElement->Release();
 	}
 	return hr;
 }
@@ -7671,26 +6093,13 @@ void CQToolbar::OnProgressChange(int progress)
 
 void CQToolbar::OnDocumentComplete()
 {
-	IHTMLDocument2 *pHtmlDocument;
-
-	if(g_Options2&OPTION2_HideFlashAds)
-	{
-		if(GetWhiteListBlockAds(NULL)&ADBLOCKER_BLOCK_FLASH)
-		{
-			if(GetHtmlDocument2(&pHtmlDocument))
-			{
-				HideFlashAds(pHtmlDocument,true);
-				pHtmlDocument->Release();
-			}
-		}
-	}
+	IHTMLDocument2* pHtmlDocument;
 
 	if(Highlight && nHighlightedWords)
 	{
 		KillTimer(ID_HIGHLIGHT_TIMER);
 		if(GetHtmlDocument2(&pHtmlDocument))
 		{
-			HighlightWords(pHtmlDocument,HighlightedWords,nHighlightedWords,HIGHLIGHT_Highlight);
 			pHtmlDocument->Release();
 		}
 	}
@@ -7725,25 +6134,9 @@ void CQToolbar::OnDownloadComplete()
 
 LRESULT CQToolbar::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	IHTMLDocument2 *pHtmlDocument;
 
 	switch(wParam)
 	{
-	case ID_HIGHLIGHT_TIMER:
-		if(IsWindow())
-		{
-			if(Highlight && nHighlightedWords && LastProgress)
-			{
-				if(GetHtmlDocument2(&pHtmlDocument))
-				{
-					HighlightWords(pHtmlDocument,HighlightedWords,nHighlightedWords,HIGHLIGHT_Highlight);
-					pHtmlDocument->Release();
-				}
-				LastProgress=0;
-			}
-		}
-		break;
-
 	case ID_COMBOENGINE_HOVER_TIMER:
 		LRESULT index;
 		POINT point;
@@ -7822,27 +6215,6 @@ LRESULT CQToolbar::OnMenuSelect(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& b
 			break;
 		case 10:
 			if(HIWORD(wParam)&MF_POPUP) ids=IDS_HELP_ZOOM;
-			break;
-		case ID_QUERO_HIGHLIGHT:
-			ids=IDS_HELP_HIGHLIGHT;
-			break;
-		case ID_QUERO_BLOCKADS:
-			ids=IDS_HELP_BLOCKADS;
-			break;
-		case ID_QUERO_HIDEFLASHADS:
-			ids=IDS_HELP_HIDEFLASHADS;
-			break;
-		case ID_QUERO_BLOCKPOPUPS:
-			ids=IDS_HELP_BLOCKPOPUPS;
-			break;
-		case ID_QUERO_CLEARHISTORY:
-			ids=IDS_HELP_CLEARHISTORY;
-			break;
-		case ID_QUERO_OPTIONS:
-			ids=IDS_HELP_OPTIONS;
-			break;
-		case ID_QUERO_ABOUT:
-			ids=IDS_HELP_ABOUT;
 			break;
 		}
 		
@@ -8295,23 +6667,8 @@ LRESULT CQToolbar::OnQueroToolbarCommand(UINT uMsg, WPARAM wParam, LPARAM lParam
 
 		if(GetHtmlDocument2(&pHtmlDocument))
 		{
-			HideFlashAds(pHtmlDocument,true);
 			pHtmlDocument->Release();
 		}
-		break;
-
-	case QUERO_COMMAND_SETBLOCKADS:
-		SetBlockAds((DWORD)lParam);
-		break;
-
-	case QUERO_COMMAND_SETHIGHLIGHT:
-		TCHAR StatusText[80];
-
-		SetHighlight(lParam!=0);
-
-		StringCbCopy(StatusText,sizeof StatusText,GetString(IDS_HIGHLIGHTING));
-		StringCbCat(StatusText,sizeof StatusText,GetString(Highlight?IDS_ON:IDS_OFF));
-		PutStatusText(StatusText);
 		break;
 
 	case QUERO_COMMAND_SETFOCUS_QEDITCTRL:
@@ -8372,14 +6729,6 @@ LRESULT CQToolbar::OnQueroToolbarCommand(UINT uMsg, WPARAM wParam, LPARAM lParam
 
 	case QUERO_COMMAND_UPDATE_QUERO_INSTANCE:
 		UpdateQueroInstance((UINT)lParam);
-		break;
-
-	case QUERO_COMMAND_TOGGLE_AD_BLOCKER:
-		if(g_BlockAds&ADBLOCKER_Enable)
-		{
-			UpdateQueroInstances(UPDATE_TEMP_UNBLOCK);
-		}
-		else SetBlockAds(g_BlockAds|ADBLOCKER_Enable);
 		break;
 
 	case QUERO_COMMAND_IEFRAME_CHANGED:
@@ -8447,20 +6796,6 @@ void CQToolbar::CenterDialog(HWND hwnd_Dialog)
 
 		::SetWindowPos(hwnd_Dialog,HWND_TOP,PosX,PosY,0,0,SWP_NOZORDER|SWP_NOSIZE|SWP_NOREDRAW);
 	}
-}
-
-bool CQToolbar::IsOperationAllowed(UINT LockFlags)
-{
-	bool result;
-
-	if(g_Restrictions&LockFlags)
-	{
-		PostMessage(WM_QUERO_TOOLBAR_COMMAND,QUERO_COMMAND_SHOW_OPERATION_LOCKED_ERROR);
-		result=false;
-	}
-	else result=true;
-	
-	return result;
 }
 
 bool CQToolbar::IsWindowMaximized()

@@ -32,7 +32,6 @@
 
 #include "Quero_i.c"
 #include "QueroBand.h"
-#include "QueroFilter.h"
 
 CComModule _Module;
 

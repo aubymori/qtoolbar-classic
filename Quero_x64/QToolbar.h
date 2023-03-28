@@ -36,7 +36,6 @@
 #include "AutoComplete.h"
 #include "Profiles.h"
 #include "IconAnimation.h"
-#include "RedirectRequest.h"
 #ifdef COMPILE_FOR_WINDOWS_VISTA
 #include "AeroReBar.h"
 #endif
@@ -122,7 +121,6 @@
 #define SETTINGS_VALUES_HIGHLIGHT 0
 #define SETTINGS_VALUES_ZOOMFACTOR 1
 #define SETTINGS_VALUES_SHOWURL 2
-#define SETTINGS_VALUES_BLOCKADS 3
 #define SETTINGS_VALUES_BLOCKPOPUPS 4
 #define SETTINGS_VALUES_FONTSIZE 5
 #define SETTINGS_VALUES_FONTCOLOR 6
@@ -799,8 +797,6 @@ public:
 		MESSAGE_HANDLER(WM_QUERO_SETFAVICON, OnSetFavIcon)
 		MESSAGE_HANDLER(WM_QUERO_KEYBOARD_HOOK_IEFRAME, OnKeyboardHook_IEFrame)
 		MESSAGE_HANDLER(WM_QUERO_REDIRECTBROWSER, OnRedirectBrowser)
-		MESSAGE_HANDLER(WM_QUERO_SHOWOPTIONS, OnShowOptions)
-		MESSAGE_HANDLER(WM_QUERO_SHOWZOOMFACTOR, OnShowZoomFactor)
 		MESSAGE_HANDLER(WM_QUERO_SHOWRESIZEWINDOW, OnShowResizeWindow)
 		MESSAGE_HANDLER(WM_QUERO_TOOLBAR_COMMAND, OnQueroToolbarCommand)
 
@@ -834,8 +830,6 @@ public:
 	LRESULT OnGo(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnSetFavIcon(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnRedirectBrowser(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	LRESULT OnShowOptions(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	LRESULT OnShowZoomFactor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnShowResizeWindow(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnQueroToolbarCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnKeyboardHook_IEFrame(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
@@ -962,8 +956,6 @@ public:
 	int GetWhiteListIndex(bool Synchronize=true);
 	int GetWhiteListIndex(WhiteListEntry *pWhiteList,UINT *pWhiteListIndex,TCHAR *host,int hostlen,bool Synchronize=true);
 	USHORT GetWhiteListPermits(TCHAR *url,TCHAR *host,int hostlen);
-	UINT GetWhiteListBlockAds(TCHAR *url);
-	bool GetWhiteListBlockPopUps(TCHAR *PopUpURL);
 	void TemporarilyUnblock(bool bUnblock,bool bRemoveFromAllInstances,TCHAR* pattern,bool bSynchronize);
 	void TemporarilyUnblockCurrentDomain(bool bUnblock,bool bRemoveFromAllInstances,bool bSynchronize);
 
@@ -1020,11 +1012,6 @@ public:
 	void SetTitle_IEFrame();
 	void FreeCurrentDocumentTitle();
 
-	// Security
-	bool ShowSecurityWarning(int WarningDialog,TCHAR *pHost,int HostLen,int WL_HostStartIndex);
-	inline bool IsSecureConnection() {return SecureLockIcon_Quero;}
-	bool IsOperationAllowed(UINT LockFlags);
-
 	// Auto Complete
 	inline CAutoComplete* GetAutoComplete() { return m_AutoComplete; }
 	inline void ResetAutoComplete() { if(m_AutoComplete) m_AutoComplete->ResetEnumerator(); }
@@ -1033,30 +1020,11 @@ public:
 	// Find on page
 	bool FindText(IHTMLDocument2* pHtmlDocument,TCHAR *pSearchText, long lFlags,BYTE findOptions,int depth=0);
 	void FindOnPage(BYTE initiatedBy,BYTE findOptions);
-	void QuickFind(TCHAR* pSearchText);
 	inline void ClearLastFoundText() {LastFoundText[0]=_T('\0');}
 	inline TCHAR* GetLastFoundText() {return LastFoundText;}
 	void SetPhraseNotFound(bool notfound,bool noredraw=false);
 	inline bool GetPhraseNotFound() {return PhraseNotFound;}
 	bool IsFocusOnInput(IHTMLDocument2 *pHtmlDocument);
-
-	// Content Blocking
-	bool HideFlashAds(IHTMLDocument2* pHtmlDocument,bool bHide);
-	HRESULT BlockObject(IHTMLDocument2* pHtmlDocument,TCHAR* pClassId,TCHAR *pType,bool bHide);
-	HRESULT BlockEmbed(IHTMLDocument2* pHtmlDocument,TCHAR* pFileExt,TCHAR *pType,bool hbHde);
-	//HRESULT RemoveHtmlElement(IHTMLDocument2* pHtmlDocument,IHTMLElement* pHtmlElement);
-	HRESULT HideHtmlElement(IDispatch* pElementDisp,bool bHide);
-	bool IsBannerAd(TCHAR *ContentURL,TCHAR *BaseURL,int AttrParsed,int ImgWidth,int ImgHeight);
-	int IsAdImageSize(int ImgWidth,int ImgHeight);
-	bool IsAdURL(TCHAR *ContentURL,TCHAR *BaseURL,BYTE context);
-	bool IsVideoPlayerURL(TCHAR *ContentURL);
-	void AddToBlockedContent(BYTE Type,TCHAR *ContentURL,TCHAR *BaseURL,bool Synchronize);
-	void SetContentBlocked();
-	void ResetBlockedContent();
-	void OnContentBlockedButtonClick(POINT *point,RECT *rcExclude);
-	void SetBlockAds(DWORD BlockAds);
-	void SetBlockPopUps(DWORD BlockPopUps);
-	void SetHideFlashAds(bool bHide);
 
 	// DOM related
 	bool GetHtmlDocument2(IHTMLDocument2** ppHtmlDocument);
@@ -1064,11 +1032,6 @@ public:
 	int GetElementType(IHTMLElement* pHtmlElement);
 	IHTMLDocument2* GetFrameDocument(int ElementType,IHTMLElement *pHtmlElement);
 	IHTMLDocument2* GetFrameDocument(IHTMLFramesCollection2 *pFramesCollection,int index);
-
-	// Highlighting
-	bool HighlightWords(IHTMLDocument2* pHtmlDocument,TCHAR Words[MAXWORDS][MAXWORDLENGTH],int nWords,BYTE highlightOptions);
-	bool HighlightWord(TCHAR* pWord);
-	void SetHighlight(bool hl);
 
 	// Zoom page
 	bool ZoomPage(UINT zoom,BYTE method);
@@ -1080,9 +1043,6 @@ public:
 	// Embedded buttons
 	void UpdateEmbedButtons(bool bForceResizeEditCtrl,bool bRedraw);
 	long GetEmbedButtonsTotalWidth();
-
-	// Quero Toolbar menu
-	void OnQueroButtonClick(UINT flags,POINT *point,RECT *rcExclude);
 
 	// Focus
 	HRESULT SetFocusOnParentWindow(IHTMLDocument2 *pHtmlDocument);
@@ -1192,7 +1152,6 @@ public:
 	UINT ZoomFactor;
 
 	// Redirect Request
-	CRedirectRequest RedirectRequest;
 	bool bAllowOnePopUp; // Ignore popup blocker once if new window is opened by Quero
 
 	// Search Profiles

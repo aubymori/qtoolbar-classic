@@ -334,7 +334,6 @@ echo Warning : Cannot register Unicode DLL on Windows 95
     <ClCompile Include="QToolbar.cpp" />
     <ClCompile Include="Quero.cpp" />
     <ClCompile Include="QueroBand.cpp" />
-    <ClCompile Include="RedirectRequest.cpp" />
     <ClCompile Include="StdAfx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|x64'">Create</PrecompiledHeader>
@@ -347,7 +346,6 @@ echo Warning : Cannot register Unicode DLL on Windows 95
   <ItemGroup>
     <None Include="Quero.def" />
     <None Include="QueroBand.rgs" />
-    <None Include="QueroFilter.rgs" />
     <None Include="UISettingsPropSheet.rgs" />
   </ItemGroup>
   <ItemGroup>
@@ -414,8 +412,6 @@ echo Warning : Cannot register Unicode DLL on Windows 95
     <ClInclude Include="QToolbar.h" />
     <ClInclude Include="Quero.h" />
     <ClInclude Include="QueroBand.h" />
-    <ClInclude Include="QueroFilter.h" />
-    <ClInclude Include="RedirectRequest.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="Toolbar.h" />
@@ -424,11 +420,11 @@ echo Warning : Cannot register Unicode DLL on Windows 95
   <ItemGroup>
     <Image Include="button_go.ico" />
     <Image Include="button_go_hot.ico" />
+    <Image Include="icon_search.ico" />
+    <Image Include="icon_search_notfound.ico" />
+    <Image Include="icon_url.ico" />
     <Image Include="search.ico" />
     <Image Include="search_notfound.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Media Include="beep.wav" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="Quero.dll.manifest" />
