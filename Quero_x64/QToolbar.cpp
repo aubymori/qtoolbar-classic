@@ -436,10 +436,6 @@ void CQToolbar::SyncSettings()
 					g_Restrictions=dword;
 					break;
 
-				case SETTINGS_VALUES_THEME:
-					if(IsNewProcess && type==REG_SZ) LoadTheme(data);
-					break;
-
 				case SETTINGS_VALUES_VERSION:
 					if(IsNewProcess && type==REG_BINARY && size==sizeof VersionInfo)
 					{
@@ -471,67 +467,6 @@ void CQToolbar::SyncSettings()
 	{
 		SyncSettings();
 	}
-}
-
-void CQToolbar::LoadTheme(TCHAR *pQueroThemeFile)
-{
-	UINT i;
-	LONG result;
-	TCHAR buffer[MAX_PATH];
-
-	g_QueroTheme_FileName=SysAllocString(pQueroThemeFile);
-
-	#ifdef COMPILE_FOR_WIN9X
-	g_QueroTheme_DLL=LoadLibrary(pQueroThemeFile);
-	#else
-	g_QueroTheme_DLL=LoadLibraryEx(pQueroThemeFile,NULL,LOAD_LIBRARY_AS_DATAFILE);
-	#endif
-
-	if(g_QueroTheme_DLL)
-	{
-		buffer[0];
-		result=LoadString(g_QueroTheme_DLL,IDS_QUEROTHEME_FORMAT,buffer,MAX_PATH);
-		if(result==0 || StrCmp(buffer,L"Quero Theme File"))
-		{
-			FreeLibrary(g_QueroTheme_DLL);
-			g_QueroTheme_DLL=NULL;
-		}
-		else
-		{
-			// Read icon sizes and padding value
-
-			int value;
-
-			struct {UINT ResId;int Min;int Max;int *pValue;} StringValue[3]=
-			{
-				{IDS_QUEROTHEME_NAVBUTTONSIZE,20,48,&g_Unscaled_NavButtonSize},
-				{IDS_QUEROTHEME_BUTTONSIZE,20,48,&g_Unscaled_ButtonSize},
-				{IDS_QUEROTHEME_PADDINGY,0,32,&g_Unscaled_PaddingY}
-			};
-
-			i=0;
-			while(i<3)
-			{
-				result=LoadString(g_QueroTheme_DLL,StringValue[i].ResId,buffer,sizeof buffer);
-				if(result && StrToIntEx(buffer,STIF_DEFAULT,&value)==TRUE && value>=StringValue[i].Min && value<=StringValue[i].Max) *StringValue[i].pValue=value;
-				i++;
-			}
-
-			// Read colors
-
-			buffer[0]=L'0';
-			buffer[1]=L'x';
-			i=0;
-			while(i<NCOLORS)
-			{
-				result=LoadString(g_QueroTheme_DLL,IDS_QUEROTHEME_COLORS+i,buffer+2,(sizeof buffer)-2);
-				if(result && StrToIntEx(buffer,STIF_SUPPORT_HEX,&value)==TRUE)
-					g_ThemeColors[i]=((value&0xFF0000)>>16)|(value&0x00FF00)|((value&0x0000FF)<<16); // Convert RGB to COLORREF
-				else g_ThemeColors[i]=COLOR_UNDEFINED;
-				i++;
-			}						
-		}
-	} // End LoadLibrary successful
 }
 
 bool CQToolbar::SaveSettingsValue(UINT ValueId,DWORD dwValue)
@@ -734,8 +669,6 @@ CQToolbar::~CQToolbar()
 			// Free global History and Whitelist
 			FreeHistory(g_History,&g_HistoryIndex);
 			FreeURLs();
-			FreeWhiteList(g_WhiteList,&g_WhiteListIndex);
-			FreeWhiteList(g_TemporaryWhiteList,&g_TemporaryWhiteListIndex);
 			g_LTimeHistory=0;
 			g_LTimeURLs=0;
 			g_LTimeWhiteList=0;
@@ -839,9 +772,6 @@ void CQToolbar::RemoveQueroInstance(int id)
 			if(pQueroBroker) pQueroBroker->Unhook_IEFrame(HandleToLong(hIEWnd));
 		}
 	}
-
-	// Remove temporary whitelist entry
-	TemporarilyUnblock(false,false,NULL,true);
 }
 
 int CQToolbar::CalculatePxHeight(int fheight)
@@ -1570,7 +1500,6 @@ void CQToolbar::UpdateQueroInstances(UINT update)
 void CQToolbar::UpdateQueroInstance(UINT update)
 {
 	BOOL bHandled;
-	int i;
 
 	if(update&UPDATE_SYNC_SETTINGS)
 	{
@@ -1622,23 +1551,7 @@ void CQToolbar::UpdateQueroInstance(UINT update)
 		m_ComboQuero.Redraw(true);
 	}
 
-	if(update&UPDATE_SEARCHPROFILES)
-	{
-		SyncSearchProfiles();
-	}
-
 	if(update&UPDATE_FREELASTHISTORYENTRY) FreeLastHistoryEntry();
-
-	if(update&UPDATE_TEMP_UNBLOCK)
-	{
-		if(WaitForSingleObject(g_hQSharedListMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-		{
-			i=GetWhiteListIndex(g_TemporaryWhiteList,&g_TemporaryWhiteListIndex,currentURL+HostStartIndex,HostEndIndex-HostStartIndex,false);
-			TemporarilyUnblockCurrentDomain(i!=-1,false,false);
-			ReleaseMutex(g_hQSharedListMutex);
-		}
-		UpdateEmbedButtons(false,true);
-	}
 
 	if(update&UPDATE_QUERO_CONTEXT_MENU)
 	{
@@ -1800,34 +1713,6 @@ LRESULT CQToolbar::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 			SetCursor(LoadCursor(NULL,IDC_ARROW));
 			HistoryEntrySelected=false;
 
-			/*
-			if(HistoryIndex)
-			{
-				if(m_ComboQuero.GetText(bstrQuery))
-				{
-					LRESULT index;
-
-					trim(bstrQuery);
-
-					index=::SendMessage((HWND)lParam,CB_FINDSTRINGEXACT,-1,(LPARAM)bstrQuery);
-					if(index==CB_ERR)
-					{
-						if(::SendMessage((HWND)lParam,CB_SELECTSTRING,-1,(LPARAM)bstrQuery)==CB_ERR)
-						{
-						//::SetWindowText(m_ComboQuero.m_hWndEdit,History[HistoryIndex-1].Query);
-						//SetCurrentType(History[HistoryIndex-1].Type);
-						}
-					}
-					else
-					{
-						::SendMessage((HWND)lParam,CB_SETCURSEL,index,0);
-						::SendMessage(m_ComboQuero.m_hWndEdit,EM_SETSEL,0,-1);
-					}
-					//::SendMessage(m_ComboQuero.m_hWndEdit,EM_SETSEL,0,-1);
-					SysFreeString(bstrQuery);
-				}
-			}
-			*/
 			if(GetFocus()!=m_ComboQuero.m_hWndEdit) m_ComboQuero.SetFocus();
 		}
 	}
@@ -2107,35 +1992,6 @@ void CQToolbar::Quero(TCHAR *pQuery, BYTE type, BYTE options, UINT newWinTab, in
 					type=TYPE_ADDRESS;
 					pEngine=NULL;
 				}
-				// Search
-				else if(type==TYPE_SEARCH)
-				{
-					if(options&QUERO_IMFEELINGLUCKY)
-					{
-						if(profileid==CurrentProfileId)
-						{
-							pEngine=&m_Profiles.CurrentProfile.LuckySearch;
-						}
-						else
-						{
-							m_Profiles.FreeEngine(&differentEngine);
-							if(m_Profiles.GetLuckySearchEngine(profileid,&differentEngine)) pEngine=&differentEngine;
-							else pEngine=NULL;
-						}
-					}
-					else IsNewQuery=(newWinTab==OPEN_SameWindow && currentType==TYPE_SEARCH);
-
-					// Append current address?
-					if(pEngine && pEngine->iRequiresAddress && pEngine->bRequiresKeywords)
-					{
-						if(StrStr(pNewQuery,L" @ ")==NULL)
-						{
-							AppendCurrentAddress(QueryWithAddress,pNewQuery,pEngine->iRequiresAddress);
-							pNewQuery=QueryWithAddress;
-							if(IsNewQuery) m_ComboQuero.SetText(pNewQuery,TYPE_SEARCH,NULL,false);
-						}
-					}
-				} // End TYPE_SEARCH
 			} // End pNewQuery
 		} // End !go2hp
 		
@@ -2148,7 +2004,7 @@ void CQToolbar::Quero(TCHAR *pQuery, BYTE type, BYTE options, UINT newWinTab, in
 				pEngine=NULL;
 			}
 		}
-		else if(pNewQuery) AddToHistory(pNewQuery,type,(options&QUERO_IMFEELINGLUCKY),engineid,profileid);
+		else if(pNewQuery) AddToURLHistory(pNewQuery);
 
 		// Build search query
 		if(pEngine && pNewQuery)
@@ -2216,27 +2072,6 @@ void CQToolbar::Quero(TCHAR *pQuery, BYTE type, BYTE options, UINT newWinTab, in
 		if(pPostData) delete[] pPostData;
 
 	} // End m_pBrowser
-}
-
-void CQToolbar::AppendCurrentAddress(TCHAR *pQueryWithAddress,TCHAR *pOriginalQuery,UINT iRequiresAddress)
-{
-	StringCchCopy(pQueryWithAddress,MAXURLLENGTH,pOriginalQuery);
-	if(iRequiresAddress && (DomainStartIndex<HostEndIndex || iRequiresAddress==QUERO_PARAMS_URL))
-	{
-		StringCchCat(pQueryWithAddress,MAXURLLENGTH,L" @ ");
-		switch(iRequiresAddress)
-		{
-		case QUERO_PARAMS_URL:
-			StringCchCat(pQueryWithAddress,MAXURLLENGTH,currentURL);
-			break;
-		case QUERO_PARAMS_HOSTNAME:
-			StringCchCatN(pQueryWithAddress,MAXURLLENGTH,currentURL+HostStartIndex,HostEndIndex-HostStartIndex);
-			break;
-		case QUERO_PARAMS_DOMAINNAME:
-			StringCchCatN(pQueryWithAddress,MAXURLLENGTH,currentURL+DomainStartIndex,HostEndIndex-DomainStartIndex);
-			break;
-		}
-	}
 }
 
 UINT CQToolbar::SplitIntoWords(TCHAR *str,TCHAR Words[MAXWORDS][MAXWORDLENGTH],BYTE options,UINT MaxWords)
@@ -2687,7 +2522,7 @@ void CQToolbar::DrawItemComboQuero(HDC hDC,DRAWITEMSTRUCT *pItem)
 
 		// Draw state icon
 
-		DrawItemIcon(hDC,&rect,PreviewIDN?g_Icons[ICON_URL]:currentIcon,hDefaultBackground,currentIconOffset,IsLoadingAnimation());
+		DrawItemIcon(hDC,&rect,PreviewIDN?g_Icons[ICON_URL]:currentIcon,hDefaultBackground,currentIconOffset,FALSE);
 
 		// Draw inbox icons
 
@@ -2752,27 +2587,10 @@ void CQToolbar::DrawItemComboQuero(HDC hDC,DRAWITEMSTRUCT *pItem)
 			type=pHistEntry->Type;
 			switch(type)
 			{
-			case TYPE_SEARCH:
-				hIcon=g_Icons[ICON_SEARCH];
-				if(pHistEntry->Flags&FLAG_BROWSEBYNAME)
-				{
-					descripton_text=GetString(IDS_LUCKYSEARCH);
-					bDrawDescription=true;
-				}
-				else if(m_Profiles.GetEngine(pHistEntry->ProfileId,pHistEntry->EngineId,&SE))
-				{
-					descripton_text=SE.Name;
-					bDrawDescription=true;
-				}
-				break;
 			case TYPE_ADDRESS:
 				if(pHistEntry->hIcon)
 				{
 					hIcon=pHistEntry->hIcon;
-				}
-				else
-				{
-					
 				}
 				break;
 			default:
@@ -3061,7 +2879,7 @@ void CQToolbar::DrawComboQueroIcon()
 				if(BufferedPaint.Begin(hDC,&rect,BPBF_TOPDOWNDIB,NULL,&hBufferedDC))
 				{
 					FillRect(hBufferedDC,&rect,hDefaultBackground);
-					DrawItemIcon(hBufferedDC,&rect,currentIcon,hDefaultBackground,currentIconOffset,IsLoadingAnimation());
+					DrawItemIcon(hBufferedDC,&rect,currentIcon,hDefaultBackground,currentIconOffset,FALSE);
 					BufferedPaint.MakeOpaque();
 					BufferedPaint.End();
 				}
@@ -3138,8 +2956,6 @@ void CQToolbar::SetPhraseNotFound(bool notfound,bool noredraw)
 
 		if(currentType==TYPE_SEARCH)
 		{
-			StopSearchAnimation(true);
-
 			IconId=notfound?ICON_SEARCH_NOTFOUND:ICON_SEARCH;
 
 			if(noredraw==false)
@@ -3506,92 +3322,6 @@ void CQToolbar::SyncURLs(bool Synchronize)
 	}
 }
 
-void CQToolbar::SyncWhiteList(bool Synchronize)
-{
-	int i;
-#ifdef COMPILE_FOR_WIN9X
-	CHAR buffer[REGKEYLENGTH];
-#else
-	TCHAR buffer[REGKEYLENGTH];
-#endif
-	LONG result;
-	HKEY hKeyQuero = NULL;
-	DWORD size,regdatasize,n;
-	HWLRegData WLdata;
-
-	// Load Whitelist from registry if logical time differs
-
-	if(Synchronize==false || WaitForSingleObject(g_hQSharedMemoryMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-	{
-		if(g_QSharedMemory==NULL || g_QSharedMemory->LTimeWhiteList!=g_LTimeWhiteList)
-		{
-			if(Synchronize==false || WaitForSingleObject(g_hQSharedListMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-			{
-				FreeWhiteList(g_WhiteList,&g_WhiteListIndex);
-
-				hKeyQuero=OpenQueroKey(HKEY_CURRENT_USER,L"WhiteList",false);
-				if(hKeyQuero)
-				{
-					n=0;
-					result=RegQueryInfoKey(hKeyQuero,NULL,NULL,NULL,NULL,NULL,NULL,&n,NULL,NULL,NULL,NULL);
-					if(result==ERROR_SUCCESS)
-					{
-						if(n>WHITELISTSIZE) i=WHITELISTSIZE;
-						else i=n;
-					}
-					else i=0;
-					g_WhiteListIndex=i;
-
-					while(i>0)
-					{
-						i--;
-						n--;
-						size=REGKEYLENGTH;
-						regdatasize=sizeof(HWLRegData);
-						#ifdef COMPILE_FOR_WIN9X
-						result=RegEnumValueA(hKeyQuero,n,buffer,&size,NULL,NULL,(LPBYTE)&WLdata,&regdatasize);
-						if(result==ERROR_SUCCESS)
-						{
-							g_WhiteList[i].Pattern=SysAllocStringLen(NULL,size);
-							if(g_WhiteList[i].Pattern)
-							{
-								if(SUCCEEDED(MultiByteToWideChar(CP_ACP,0,buffer,-1,g_WhiteList[i].Pattern,size+1)))
-								{
-									g_WhiteList[i].PatternLength=size;
-								}
-								else
-								{
-									SysFreeString(g_WhiteList[i].Pattern);
-									g_WhiteList[i].PatternLength=0;
-								}
-							}
-							else g_WhiteList[i].PatternLength=0;
-							g_WhiteList[i].Permits=WLdata.Permits;
-						}
-						#else
-						result=RegEnumValue(hKeyQuero,n,buffer,&size,NULL,NULL,(LPBYTE)&WLdata,&regdatasize);
-						if(result==ERROR_SUCCESS)
-						{
-							g_WhiteList[i].Pattern=SysAllocStringLen(buffer,size);
-							if(g_WhiteList[i].Pattern) g_WhiteList[i].PatternLength=size;
-							else g_WhiteList[i].PatternLength=0;
-							g_WhiteList[i].Permits=WLdata.Permits;
-						}
-						#endif
-					}
-					RegCloseKey(hKeyQuero);
-				}
-
-				// Update logical time
-				if(g_QSharedMemory) g_LTimeWhiteList=g_QSharedMemory->LTimeWhiteList;
-
-				if(Synchronize) ReleaseMutex(g_hQSharedListMutex);
-			}
-		}
-		if(Synchronize) ReleaseMutex(g_hQSharedMemoryMutex);
-	}
-}
-
 void CQToolbar::FreeHistory(HistoryEntry* History,UINT* HistoryIndex)
 {
 	UINT i;
@@ -3620,288 +3350,6 @@ void CQToolbar::FreeURLs()
 	}
 
 	g_nURLs=0;
-}
-
-void CQToolbar::FreeWhiteList(WhiteListEntry *pWhiteList,UINT *pWhiteListIndex)
-{
-	UINT i;
-
-	for(i=0;i<*pWhiteListIndex;i++)
-	{
-		if(pWhiteList[i].Pattern)
-		{
-			SysFreeString(pWhiteList[i].Pattern);
-			pWhiteList[i].Pattern=NULL;
-		}
-	}
-	
-	*pWhiteListIndex=0;
-}
-
-void CQToolbar::AddToHistory(TCHAR *entry,BYTE type,BYTE flags,int engineid,int profileid)
-{
-	UINT i;
-	HKEY hKeyQuero;
-	DWORD size;
-	TCHAR buffer[REGKEYLENGTH];
-	HQRegData data;
-	HistoryEntry historyentry;
-	size_t len;
-
-	CoFileTimeNow(&historyentry.Timestamp);
-	historyentry.Type=type;
-	historyentry.Flags=flags;
-	historyentry.ProfileId=profileid;
-	historyentry.EngineId=engineid;
-	historyentry.hIcon=NULL;
-
-	// Save history entry
-
-	if(	(type==TYPE_SEARCH && (g_Options&OPTION_SaveSearchHistory)) ||
-		(type==TYPE_ADDRESS && (g_Options&OPTION_SaveAddressHistory)))
-	{
-		data.ProfileId=profileid;
-		data.EngineId=engineid;
-		data.Type=type;
-		data.Flags=flags;
-		data.reserved2=0;
-		data.Timestamp=historyentry.Timestamp;
-
-		StrCchLen(entry,MAXURLLENGTH,len);
-		if(len>0 && len<REGKEYLENGTH) // Do not add entry if too long for registry
-		{
-			if(WaitForSingleObject(g_hQSharedMemoryMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-			{
-				if(WaitForSingleObject(g_hQSharedListMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-				{
-					SyncHistory(false);
-
-					for(i=0;i<g_HistoryIndex;i++) if(g_History[i].Query) if(!StrCmp(entry,g_History[i].Query)) break;
-
-					hKeyQuero=OpenQueroKey(HKEY_CURRENT_USER,L"History",true);
-
-					if(i==g_HistoryIndex) // Not found
-					{	
-						if(g_HistoryIndex>=HISTORYSIZE)
-						{
-							g_HistoryIndex--;
-							if(g_History[0].Query) SysFreeString(g_History[0].Query);
-							CopyMemory(g_History, g_History+1, (g_HistoryIndex)*sizeof(HistoryEntry));
-							
-							// Delete first history entry
-							if(hKeyQuero)
-							{
-								size=REGKEYLENGTH;
-								if(RegEnumValue(hKeyQuero,0,buffer,&size,NULL,NULL,NULL,NULL)==ERROR_SUCCESS)
-									RegDeleteValue(hKeyQuero,buffer);
-							}
-						}
-
-						historyentry.Query=SysAllocString(entry);
-						i=g_HistoryIndex;
-						g_HistoryIndex++;						
-					}
-					else
-					{
-						historyentry.Query=g_History[i].Query;
-						if(g_HistoryIndex>1 && i!=g_HistoryIndex-1) // Copy old history entry to top of list
-						{
-							if(hKeyQuero) RegDeleteValue(hKeyQuero,entry);
-							
-							CopyMemory(g_History+i, g_History+i+1, (g_HistoryIndex-i-1)*sizeof(HistoryEntry));
-							i=g_HistoryIndex-1;
-						}
-					}
-
-					// Set attributes
-					g_History[i]=historyentry;
-
-					// Write histroy entry to registry
-					if(hKeyQuero)
-					{
-						RegSetValueEx(hKeyQuero,entry,0,REG_BINARY,(LPBYTE)&data,sizeof(HQRegData));
-						RegCloseKey(hKeyQuero);
-					}
-
-					// Advance logical time
-					if(g_QSharedMemory) g_LTimeHistory=++(g_QSharedMemory->LTimeHistory);
-
-					ReleaseMutex(g_hQSharedListMutex);
-				}
-
-				ReleaseMutex(g_hQSharedMemoryMutex);
-			}
-		}
-	} // End SaveSearchHistory || SaveAddressHistory enabled
-
-	// Update last history entry
-
-	historyentry.Query=entry;
-	CopyLastHistoryEntry(&historyentry,false);
-}
-
-void CQToolbar::DeleteFromHistory(TCHAR *entry)
-{
-	HKEY hKeyQuero;
-	UINT i;
-
-	if(WaitForSingleObject(g_hQSharedMemoryMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-	{
-		if(WaitForSingleObject(g_hQSharedListMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-		{
-			SyncHistory(false);
-
-			for(i=0;i<g_HistoryIndex;i++) if(g_History[i].Query) if(!StrCmp(entry,g_History[i].Query)) break;
-
-			if(i<g_HistoryIndex) // Found
-			{
-				hKeyQuero=OpenQueroKey(HKEY_CURRENT_USER,L"History",true);
-				if(hKeyQuero)
-				{
-					RegDeleteValue(hKeyQuero,entry);
-					RegCloseKey(hKeyQuero);
-				}
-
-				if(g_History[i].Query) SysFreeString(g_History[i].Query);
-
-				if(i!=g_HistoryIndex-1) CopyMemory(g_History+i,g_History+i+1,(g_HistoryIndex-i-1)*sizeof(HistoryEntry));
-
-				g_HistoryIndex--;
-
-				// Update last history entry
-				CopyLastHistoryEntry(NULL,false);
-
-				// Advance logical time
-				if(g_QSharedMemory) g_LTimeHistory=++(g_QSharedMemory->LTimeHistory);
-			}
-
-			ReleaseMutex(g_hQSharedListMutex);
-		}
-
-		ReleaseMutex(g_hQSharedMemoryMutex);
-	}
-}
-
-void CQToolbar::AddToURLHistory(TCHAR *entry)
-{
-	UINT i;
-	HKEY hKeyQuero;
-	DWORD size;
-	TCHAR buffer[REGKEYLENGTH],*found;
-	HURLRegData data;
-	size_t len;
-
-	if(g_Options&OPTION_SaveAddressHistory)
-	{
-		CoFileTimeNow(&data.Timestamp);
-		data.reserved1=0;
-		data.reserved2=0;
-
-		StrCchLen(entry,MAXURLLENGTH,len);
-		if(len>0 && len<REGKEYLENGTH) // Do not add if too long for registry
-		{
-			if(WaitForSingleObject(g_hQSharedMemoryMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-			{
-				if(WaitForSingleObject(g_hQSharedListMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-				{
-					SyncURLs(false);
-
-					for(i=0;i<g_nURLs;i++) if(g_URLs[i]) if(!StrCmp(entry,g_URLs[i])) break;
-
-					hKeyQuero=OpenQueroKey(HKEY_CURRENT_USER,L"URL",true);
-
-					if(i==g_nURLs) // Not found
-					{	
-						if(g_nURLs>=URLHISTORYSIZE)
-						{
-							g_nURLs--;
-							if(g_URLs[0]) SysFreeString(g_URLs[0]);
-							CopyMemory(g_URLs,g_URLs+1,(g_nURLs)*sizeof(BSTR));
-							
-							// Delete first history entry
-							if(hKeyQuero)
-							{
-								size=REGKEYLENGTH;
-								if(RegEnumValue(hKeyQuero,0,buffer,&size,NULL,NULL,NULL,NULL)==ERROR_SUCCESS)
-									RegDeleteValue(hKeyQuero,buffer);
-							}
-						}
-						g_URLs[g_nURLs]=SysAllocString(entry);
-						if(g_URLs[g_nURLs])
-						{
-							g_nURLs++;
-
-							if(hKeyQuero) RegSetValueEx(hKeyQuero,entry,0,REG_BINARY,(LPBYTE)&data,sizeof(HURLRegData));
-						}
-					}
-					else if(g_nURLs>1 && i!=g_nURLs-1) // Copy old history entry to top of list
-					{
-						if(hKeyQuero)
-						{
-							RegDeleteValue(hKeyQuero,entry);
-							RegSetValueEx(hKeyQuero,entry,0,REG_BINARY,(LPBYTE)&data,sizeof(HURLRegData));
-						}
-
-						found=g_URLs[i];
-						CopyMemory(g_URLs+i,g_URLs+i+1,(g_nURLs-i-1)*sizeof(BSTR));
-						g_URLs[g_nURLs-1]=found;
-					}
-					else // Update
-					{
-						if(hKeyQuero) RegSetValueEx(hKeyQuero,entry,0,REG_BINARY,(LPBYTE)&data,sizeof(HURLRegData));		
-					}
-
-					if(hKeyQuero) RegCloseKey(hKeyQuero);
-			
-					// Advance logical time
-					if(g_QSharedMemory) g_LTimeURLs=++(g_QSharedMemory->LTimeURLs);
-
-					ReleaseMutex(g_hQSharedListMutex);
-				}
-
-				ReleaseMutex(g_hQSharedMemoryMutex);
-			}
-		}
-	} // End OPTION_SaveAddressHistory
-}
-
-void CQToolbar::DeleteFromURLHistory(TCHAR *entry)
-{
-	HKEY hKeyQuero;
-	UINT i;
-
-	if(WaitForSingleObject(g_hQSharedMemoryMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-	{
-		if(WaitForSingleObject(g_hQSharedListMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-		{
-			SyncURLs(false);
-
-			for(i=0;i<g_nURLs;i++) if(g_URLs[i]) if(!StrCmp(entry,g_URLs[i])) break;
-
-			if(i<g_nURLs) // Found
-			{
-				hKeyQuero=OpenQueroKey(HKEY_CURRENT_USER,L"URL",true);
-				if(hKeyQuero)
-				{
-					RegDeleteValue(hKeyQuero,entry);
-					RegCloseKey(hKeyQuero);
-				}
-
-				if(g_URLs[i]) SysFreeString(g_URLs[i]);
-
-				if(i!=g_nURLs-1) CopyMemory(g_URLs+i,g_URLs+i+1,(g_nURLs-i-1)*sizeof(BSTR));
-
-				g_nURLs--;
-
-				// Advance logical time
-				if(g_QSharedMemory) g_LTimeURLs=++(g_QSharedMemory->LTimeURLs);
-			}
-
-			ReleaseMutex(g_hQSharedListMutex);
-		}
-
-		ReleaseMutex(g_hQSharedMemoryMutex);
-	}
 }
 
 void CQToolbar::ClearHistory()
@@ -3956,155 +3404,6 @@ void CQToolbar::ClearHistory()
 
 	// Free last history entries of other Quero instances
 	UpdateQueroInstances(UPDATE_FREELASTHISTORYENTRY);
-
-	m_ComboQuero.SetText(L"",TYPE_SEARCH,NULL,false);
-}
-
-int CQToolbar::AddToWhiteList(TCHAR* entry,USHORT permits,bool or_permits)
-{
-	int result;
-	UINT i;
-	HKEY hKeyQuero;
-	HWLRegData data;
-	size_t patternlength;
-
-	data.Permits=permits;
-	data.reserved=0;
-	StrCchLen(entry,MAXURLLENGTH,patternlength);
-
-	result=-1;
-
-	if(patternlength>0 && patternlength<REGKEYLENGTH)
-	{
-		if(WaitForSingleObject(g_hQSharedMemoryMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-		{
-			if(WaitForSingleObject(g_hQSharedListMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-			{
-				SyncWhiteList(false);
-
-				for(i=0;i<g_WhiteListIndex;i++) if(g_WhiteList[i].Pattern) if(!StrCmp(entry,g_WhiteList[i].Pattern)) break;
-
-				hKeyQuero=OpenQueroKey(HKEY_CURRENT_USER,L"WhiteList",true);
-				
-				if((UINT)i==g_WhiteListIndex) // Not found
-				{
-					if(g_WhiteListIndex<WHITELISTSIZE)
-					{
-						g_WhiteList[g_WhiteListIndex].Pattern=SysAllocString(entry);
-						if(g_WhiteList[g_WhiteListIndex].Pattern)
-						{
-							g_WhiteList[g_WhiteListIndex].PatternLength=(int)patternlength;
-							g_WhiteList[g_WhiteListIndex].Permits=permits;
-							g_WhiteListIndex++;
-							result=i;
-						}
-					}
-					else
-					{
-						MessageBox(GetString(IDS_ERR_WL_OVERFLOW),L"Quero Toolbar",MB_ICONWARNING|MB_OK);
-					}
-
-				}
-				else // Update
-				{
-					if(or_permits) data.Permits=g_WhiteList[i].Permits|permits;					
-					g_WhiteList[i].Permits=data.Permits;
-					result=i;
-				}
-
-				// Save entry in registry
-				if(hKeyQuero)
-				{
-					if(result!=-1) RegSetValueEx(hKeyQuero,entry,0,REG_BINARY,(LPBYTE)&data,sizeof(HWLRegData));
-					RegCloseKey(hKeyQuero);
-				}
-		
-				// Advance logical time
-				if(g_QSharedMemory) g_LTimeWhiteList=++(g_QSharedMemory->LTimeWhiteList);
-
-				ReleaseMutex(g_hQSharedListMutex);
-			}
-
-			ReleaseMutex(g_hQSharedMemoryMutex);
-		}
-	}
-
-	return result;
-}
-
-int CQToolbar::DeleteFromWhiteList(TCHAR* entry)
-{
-	int result;
-	HKEY hKeyQuero;
-	UINT i;
-
-	result=-1;
-
-	if(WaitForSingleObject(g_hQSharedMemoryMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-	{
-		if(WaitForSingleObject(g_hQSharedListMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-		{
-			SyncWhiteList(false);
-
-			for(i=0;i<g_WhiteListIndex;i++) if(g_WhiteList[i].Pattern) if(!StrCmp(entry,g_WhiteList[i].Pattern)) break;
-
-			if(i<g_WhiteListIndex) // Found
-			{
-				hKeyQuero=OpenQueroKey(HKEY_CURRENT_USER,L"WhiteList",true);
-				if(hKeyQuero)
-				{
-					RegDeleteValue(hKeyQuero,entry);
-					RegCloseKey(hKeyQuero);
-				}
-
-				if(g_WhiteList[i].Pattern) SysFreeString(g_WhiteList[i].Pattern);
-
-				if(i!=g_WhiteListIndex-1) CopyMemory(g_WhiteList+i,g_WhiteList+i+1,(g_WhiteListIndex-i-1)*sizeof(WhiteListEntry));
-
-				g_WhiteListIndex--;
-
-				// Advance logical time
-				if(g_QSharedMemory) g_LTimeWhiteList=++(g_QSharedMemory->LTimeWhiteList);
-
-				result=i;
-			}
-
-			ReleaseMutex(g_hQSharedListMutex);
-		}
-
-		ReleaseMutex(g_hQSharedMemoryMutex);
-	}
-
-	return result;
-}
-
-void CQToolbar::ResetWhiteList()
-{
-	HKEY hKeyQuero;
-	UINT i;
-
-	if(WaitForSingleObject(g_hQSharedMemoryMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-	{
-		if(WaitForSingleObject(g_hQSharedListMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-		{
-			hKeyQuero=OpenQueroKey(HKEY_CURRENT_USER,NULL,true);
-			if(hKeyQuero)
-			{
-				SHDeleteKey(hKeyQuero,L"WhiteList");
-				RegCloseKey(hKeyQuero);
-			}
-
-			for(i=0;i<g_WhiteListIndex;i++) if(g_WhiteList[i].Pattern) {SysFreeString(g_WhiteList[i].Pattern);g_WhiteList[i].Pattern=NULL;}
-			g_WhiteListIndex=0;
-
-			// Advance logical time
-			if(g_QSharedMemory) g_LTimeWhiteList=++(g_QSharedMemory->LTimeWhiteList);
-
-			ReleaseMutex(g_hQSharedListMutex);
-		}
-
-		ReleaseMutex(g_hQSharedMemoryMutex);
-	}
 }
 
 #define ID_BLOCKED_DIVS 0x1000
@@ -4114,70 +3413,6 @@ void CQToolbar::ResetWhiteList()
 #define ID_ALLOWED_SITES 0x1004
 #define ID_TEMP_UNBLOCK 0x1005
 #define ID_HIDE_FLASH 0x1006
-
-void CQToolbar::TemporarilyUnblockCurrentDomain(bool bUnblock,bool bRemoveFromAllInstances,bool bSynchronize)
-{
-	TCHAR coreDomain[MAXURLLENGTH];
-
-	CopyCurrentCoreDomain(coreDomain);
-	TemporarilyUnblock(bUnblock,bRemoveFromAllInstances,coreDomain,bSynchronize);
-}
-
-void CQToolbar::TemporarilyUnblock(bool bUnblock,bool bRemoveFromAllInstances,TCHAR* pattern,bool bSynchronize)
-{
-	UINT i;
-	UINT maxUsedIndex;
-	bool bInstanceMatch;
-
-	if(bSynchronize==false || WaitForSingleObject(g_hQSharedListMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-	{
-		if(QueroInstanceId>=0 && QueroInstanceId<MAX_QUERO_INSTANCES)
-		{
-			i=0;
-			maxUsedIndex=0;
-			while(i<g_TemporaryWhiteListIndex)
-			{
-				bInstanceMatch=(g_TemporaryWhiteList[i].QueroInstanceId==QueroInstanceId);
-				if(bInstanceMatch || bRemoveFromAllInstances)
-				{
-					if(bInstanceMatch || pattern==NULL || !StrCmp(g_TemporaryWhiteList[i].Pattern,pattern))
-					{
-						if(g_TemporaryWhiteList[i].Pattern)
-						{
-							SysFreeString(g_TemporaryWhiteList[i].Pattern);
-							g_TemporaryWhiteList[i].Pattern=NULL;
-						}
-					}
-					if(bRemoveFromAllInstances==false) break;
-				}
-				if(g_TemporaryWhiteList[i].Pattern) maxUsedIndex=i;
-				i++;
-			}
-			if(bRemoveFromAllInstances)
-			{
-				g_TemporaryWhiteListIndex=(maxUsedIndex+1);
-			}
-			else if(bUnblock)
-			{
-				g_TemporaryWhiteList[i].Pattern=SysAllocString(pattern);
-				if(g_TemporaryWhiteList[i].Pattern)
-				{
-					g_TemporaryWhiteList[i].PatternLength=SysStringLen(g_TemporaryWhiteList[i].Pattern);
-					g_TemporaryWhiteList[i].Permits=WL_ALLOW_ALL;
-					g_TemporaryWhiteList[i].QueroInstanceId=QueroInstanceId;
-					if(i==g_TemporaryWhiteListIndex) g_TemporaryWhiteListIndex++;
-				}
-			}
-			else if((i+1)==g_TemporaryWhiteListIndex)
-			{
-				g_TemporaryWhiteListIndex=(maxUsedIndex+1);
-			}
-
-			bTemporarilyUnblock=bUnblock;
-		}
-		if(bSynchronize) ReleaseMutex(g_hQSharedListMutex);
-	}
-}
 
 HistoryEntry * CQToolbar::GetLastHistoryEntry()
 {
@@ -4244,20 +3479,6 @@ void CQToolbar::SelectProfile(int ProfileId,int EngineId)
 	SelectEngine(CurrentEngineIndex,true,true,true);
 }
 
-void CQToolbar::SyncSearchProfiles()
-{
-	int NewEngineId;
-
-	m_Profiles.LoadProfileList();
-	if(m_Profiles.IsInList(CurrentProfileId,m_Profiles.ProfileList,m_Profiles.ProfileCount)==false)
-	{
-		CurrentProfileId=m_Profiles.DefaultProfileId;
-		NewEngineId=-1;
-	}
-	else NewEngineId=GetEngineId();
-	SelectProfile(CurrentProfileId,NewEngineId);
-}
-
 void CQToolbar::OnNavigateBrowser(TCHAR *newurl,bool first)
 {
 	int i;
@@ -4286,11 +3507,9 @@ void CQToolbar::OnNavigateBrowser(TCHAR *newurl,bool first)
 	if(ImFeelingLucky)
 	{
 		Searching=false;
-		StopSearchAnimation(true);
 	}
 
 	// Is new hostname or scheme?
-
 	if(HostEndIndex) StringCbCopyN(new_hostname,sizeof new_hostname,currentURL,HostEndIndex*sizeof(TCHAR));
 	else new_hostname[0]=L'\0';
 
@@ -4325,20 +3544,7 @@ void CQToolbar::OnNavigateBrowser(TCHAR *newurl,bool first)
 		}
 	}
 
-	// Add/remove temporary whitelist entry
-	if(g_TemporaryWhiteListIndex)
-	{
-		if(WaitForSingleObject(g_hQSharedListMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-		{
-			i=GetWhiteListIndex(g_TemporaryWhiteList,&g_TemporaryWhiteListIndex,currentURL+HostStartIndex,HostEndIndex-HostStartIndex,false);
-			TemporarilyUnblockCurrentDomain(i!=-1,false,false);
-			ReleaseMutex(g_hQSharedListMutex);
-		}
-		bUpdateEmbedButtons=true;
-	}
-
 	// Update search box and add URL to history
-
 	if(g_IE_MajorVersion<7) SecureLockIcon_IE=(!NavigationFailed && !StrCmpN(currentURL,_T("https://"),8));
 	if(SecureLockIcon_Quero!=(SecureLockIcon_IE && g_ShowURL)) bUpdateEmbedButtons=true;
 	SecureLockIcon_Quero=SecureLockIcon_IE;
@@ -4375,7 +3581,6 @@ void CQToolbar::OnNavigateBrowser(TCHAR *newurl,bool first)
 	{
 		// Search intercepted
 		Searching=true;
-		StartSearchAnimation();
 	}
 	else
 	{
@@ -4383,14 +3588,9 @@ void CQToolbar::OnNavigateBrowser(TCHAR *newurl,bool first)
 		if(!NavigationFailed)
 		{
 			HistoryEntry *lastSearch=GetLastHistoryEntry();
-			if(!ImFeelingLucky && lastSearch && lastSearch->Type==TYPE_ADDRESS && IsMoreRecent_Than(lastSearch->Timestamp,URLNavigationTime))
-			{
-				if(beforeURL[0]!=_T('\0') && StrCmp(currentURL,beforeURL)) AddToURLHistory(beforeURL);
-			}
-			
 			CoFileTimeNow(&URLNavigationTime);
 
-			AddToURLHistory(currentURL);
+
 		}
 		// Show URL
 		// m_pBrowser->get_AddressBar(&bar); doesnt work correctly: returns always VARIANT_TRUE
@@ -4455,103 +3655,6 @@ void CQToolbar::OnSetSecureLockIcon(SecureLockIconConstants SecureLockIconStatus
 			m_ComboQuero.SetRedraw(TRUE);
 			m_ComboQuero.GetEditCtrl()->SetRedraw(TRUE);
 			m_ComboQuero.Redraw(true,RDW_INVALIDATE|RDW_NOERASE|RDW_UPDATENOW,RDW_INVALIDATE|RDW_NOERASE|RDW_UPDATENOW);
-		}
-	}
-}
-
-void CQToolbar::OnNewWindow3(IDispatch **ppDisp,VARIANT_BOOL *pCancel,DWORD dwFlags,BSTR bstrUrlContext,BSTR bstrUrl)
-{
-	bool bAllowPopUp=false;
-	FILETIME now,diff;
-
-
-	CoFileTimeNow(&now);
-
-	if(g_BlockPopUps&POPUPBLOCKER_Enable)
-	{
-		// Calculate elapsed time when last pop-up was opened
-		GetDiffFileTime(&LastPopUpTime,&now,&diff);
-
-		// Allow only 1 popup per second
-		if(diff.dwHighDateTime>0 || diff.dwLowDateTime>10000000)
-		{
-			if(bAllowOnePopUp)
-			{
-				bAllowPopUp=true;
-				bAllowOnePopUp=false;
-			}
-
-			// NWMF_USERINITED 0x0002 | NWMF_OVERRIDEKEY 0x0008 | NWMF_FROMPROXY = 0x0040
-			if((g_BlockPopUps&POPUPBLOCKER_BlockAll)==0)
-			{
-				if(dwFlags&0x0002) bAllowPopUp=true;
-			}
-		
-			// Check if pop-up override key is pressed or pop-up is from a proxy (0x80 from IE itself)
-			if(dwFlags&(0x0008|0x0040|0x0080)) bAllowPopUp=true;
-		}
-	}
-	else bAllowPopUp=true;
-
-	if(bAllowPopUp)
-	{
-		LastPopUpTime=now;
-		*pCancel=VARIANT_FALSE;
-	}
-	else
-	{
-		PopupBlocked();
-		*pCancel=VARIANT_TRUE;
-	}
-}
-
-void CQToolbar::GetDiffFileTime(FILETIME *time1,FILETIME *time2,FILETIME *diff)
-{
-	// Assumption: time2 > time1
-	if(time2->dwLowDateTime < time1->dwLowDateTime) // Overflow
-	{
-		diff->dwLowDateTime=~(time1->dwLowDateTime-time2->dwLowDateTime) + 1;
-		diff->dwHighDateTime=time2->dwHighDateTime-time1->dwHighDateTime - 1;
-	}
-	else
-	{
-		diff->dwLowDateTime=time2->dwLowDateTime-time1->dwLowDateTime;
-		diff->dwHighDateTime=time2->dwHighDateTime-time1->dwHighDateTime;
-	}
-}
-
-void CQToolbar::PopupBlocked()
-{
-	TCHAR String[MAX_STRING_LENGTH];
-	TCHAR soundFile[MAX_PATH];
-	DWORD size;
-	IHTMLDocument2 *pHtmlDocument2;
-	IHTMLWindow2 *pHtmlWindow2;
-	HRESULT hr;
-
-	// Update status text
-	if(GetHtmlDocument2(&pHtmlDocument2))
-	{
-		hr=pHtmlDocument2->get_parentWindow(&pHtmlWindow2);
-		if(SUCCEEDED_OK(hr) && pHtmlWindow2)
-		{
-			if(LoadString(_Module.GetResourceInstance(),IDS_POPUPBLOCKED,String,MAX_STRING_LENGTH)) pHtmlWindow2->put_status(CComBSTR(String));
-			pHtmlWindow2->Release();
-		}
-		pHtmlDocument2->Release();
-	}
-
-	// Play sound
-	if(g_BlockPopUps&POPUPBLOCKER_PlaySound)
-	{
-		size=sizeof soundFile;
-		if(SHGetValue(HKEY_CURRENT_USER,L"AppEvents\\Schemes\\Apps\\Explorer\\BlockedPopup\\.current",L"",NULL,soundFile,&size)==ERROR_SUCCESS)
-		{
-			PlaySound(soundFile, NULL, SND_ALIAS | SND_FILENAME | SND_NODEFAULT | SND_ASYNC);
-		}
-		else
-		{
-			PlaySound((LPCWSTR)SND_ALIAS_SYSTEMDEFAULT, NULL, SND_ALIAS_ID | SND_ASYNC);
 		}
 	}
 }
@@ -4651,258 +3754,7 @@ void CQToolbar::MakeAbsoluteURL(TCHAR *AbsoluteURL,TCHAR *URL,TCHAR *BaseURL)
 		}
 }
 
-bool CQToolbar::CheckIDN(TCHAR *url_decoded,int hoststartidx,int hostendidx,int domainstartidx,int idna_status)
-{
-	int i,hostlen;
-	bool suspicious;
-#ifndef COMPILE_FOR_WIN9X
-	bool missglyphs;
-#endif
-	bool newlabel;
-	TCHAR *pURL,*pHost;
-	USHORT WhiteListPermits;
-
-	pHost=url_decoded+hoststartidx;
-	hostlen=hostendidx-hoststartidx;
-	domainstartidx-=hoststartidx;
-
-	WhiteListPermits=GetWhiteListPermits(url_decoded,pHost,hostlen);
-
-	if(!(WhiteListPermits&WL_ALLOW_IDN))
-	{
-		if(g_Warnings&WARNING_IDN)
-		{
-			suspicious=false;
-			i=hoststartidx;
-			newlabel=true;
-
-			pURL=pHost;
-		}
-
-		if(g_Warnings&WARNING_ASCIIRULES_VIOLATION)
-		{
-		}
-	}
-
-#ifndef COMPILE_FOR_WIN9X
-	// Check for missing glyphs
-
-#define MAX_LINKED_FONTS 32
-
-	if(!(WhiteListPermits&WL_ALLOW_MISSGLYPHS) && (g_Warnings&WARNING_MISSGLYPHS))
-	{
-		HDC hDC;
-
-		hDC=GetDC();
-		if(hDC)
-		{
-			SelectObject(hDC,hFont);
-
-			if(HasMissingGlyphs(hDC,pHost,hostlen))
-			{
-				// Try Font Linking to resolve missing glyphs
-
-				LOGFONT fIconTitleFont;
-				TCHAR FontNames[2048];
-				DWORD type,size;
-				TCHAR *pFontName;
-				HFONT hFonts[MAX_LINKED_FONTS];
-				int cFonts;
-
-				SCRIPT_ITEM ScriptItems[255];
-				int cItems;
-				int i,j;
-
-				missglyphs=true;
-
-				// Enumarate linked fonts
-
-				if(SystemParametersInfo(SPI_GETICONTITLELOGFONT,sizeof(LOGFONT),&fIconTitleFont,0))
-				{
-					cFonts=0;
-
-					type=REG_MULTI_SZ;
-					size=sizeof FontNames;
-
-					if(SHGetValue(HKEY_LOCAL_MACHINE,L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\FontLink\\SystemLink",fIconTitleFont.lfFaceName,&type,FontNames,&size)==ERROR_SUCCESS)
-					{
-
-						pFontName=FontNames;
-						i=0;
-						size>>=1;
-						if(size) size--;
-						while((DWORD)i<size && cFonts<MAX_LINKED_FONTS)
-						{
-							if(FontNames[i]==L',') FontNames[i]=0;
-
-							if(FontNames[i]==0)
-							{
-								StringCbCopy(fIconTitleFont.lfFaceName,sizeof fIconTitleFont.lfFaceName,pFontName);
-								hFonts[cFonts]=CreateFontIndirect(&fIconTitleFont);
-								if(hFonts[cFonts]) cFonts++;
-							
-								pFontName=FontNames+i+1;
-							}
-
-							i++;
-						}
-
-						// Itemize host name and try linked fonts for each item
-
-						if(cFonts)
-						{
-							if(ScriptItemize(pHost,hostlen,255,NULL,NULL,ScriptItems,&cItems)==0)
-							{
-								i=0;
-								while(i<cItems)
-								{
-									j=0;
-									while(j<=cFonts)
-									{
-										if(j==0) SelectObject(hDC,hFont);
-										else SelectObject(hDC,hFonts[j-1]);
-
-										if(HasMissingGlyphs(hDC,pHost+ScriptItems[i].iCharPos,ScriptItems[i+1].iCharPos-ScriptItems[i].iCharPos)==false) // According to MSDN a terminal item ScriptItems[cItems] is available
-										{
-											break;
-										}
-										j++;
-									}
-
-									if(j>cFonts)
-									{
-										break;
-									}
-
-									i++;
-								}
-
-								if(i==cItems) missglyphs=false;
-							}
-
-							// Free linked fonts
-							for(i=0;i<cFonts;i++) if(hFonts[i]) DeleteObject(hFonts[i]);
-						}
-					}
-				}
-			}
-			else missglyphs=false;
-			ReleaseDC(hDC);
-		}
-	}
-#endif
-
-	return false;
-}
-
-bool CQToolbar::HasMissingGlyphs(HDC hDC,TCHAR *pHost,int len)
-{
-#ifndef COMPILE_FOR_WIN9X
-	WORD glyphs[255*2];
-	DWORD n;
-	bool missglyphs;
-
-	missglyphs=false;
-
-	n=GetGlyphIndices(hDC,pHost,len,(LPWORD)&glyphs,GGI_MARK_NONEXISTING_GLYPHS);
-
-	if(n!=GDI_ERROR && n<=255*2)
-	{
-		while(n)
-		{
-			n--;
-
-			// QDEBUG_PRINTF(L"Glyph",L"%d: %x",n,glyphs[n]);
-
-			if(glyphs[n]==0x1f || glyphs[n]==0xffff) // Workaround: msdn says that nonexisting glyphs are represented as 0xffff, but actually they are returned as 0x1f
-			{
-				missglyphs=true;
-				break;
-			}
-		}
-	}
-
-	return missglyphs;
-#else
-	return false;
-#endif
-}
-	
-int CQToolbar::GetWhiteListIndex(bool Synchronize)
-{
-	return GetWhiteListIndex(g_WhiteList,&g_WhiteListIndex,currentURL+HostStartIndex,HostEndIndex-HostStartIndex,Synchronize);
-}
-
-int CQToolbar::GetWhiteListIndex(WhiteListEntry *pWhiteList,UINT *pWhiteListIndex,TCHAR *host,int hostlen,bool Synchronize)
-{
-	int result;
-	int i,k,n;
-
-	result=-1;
-
-	if(Synchronize==false || WaitForSingleObject(g_hQSharedListMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-	{
-		i=0;
-		n=*pWhiteListIndex;
-		while(i<n)
-		{
-			if(pWhiteList[i].Pattern && pWhiteList[i].PatternLength<=hostlen)
-			{
-				k=hostlen-pWhiteList[i].PatternLength;
-
-				if(k==0 || host[k-1]==L'.')
-				{				
-					if(!StrCmpN(host+k,pWhiteList[i].Pattern,pWhiteList[i].PatternLength))
-					{
-						result=i;
-						break;
-					}
-				}
-			}
-			i++;
-		}
-		if(Synchronize) ReleaseMutex(g_hQSharedListMutex);
-	}
-
-	return result;
-}
-
-USHORT CQToolbar::GetWhiteListPermits(TCHAR *url,TCHAR *host,int hostlen)
-{
-	int i;
-	USHORT Permits;
-
-	Permits=0;
-
-	if(g_Options&(OPTION_DisableAdBlockerForLocalWebSites|OPTION_DisableAdBlockerForHttpsWebSites))
-	{
-
-	}
-
-	if(Permits==0)
-	{
-		if(WaitForSingleObject(g_hQSharedListMutex,QMUTEX_TIMEOUT)==WAIT_OBJECT_0)
-		{
-			i=GetWhiteListIndex(g_TemporaryWhiteList,&g_TemporaryWhiteListIndex,host,hostlen,false);
-			if(i!=-1)
-			{
-				Permits=WL_ALLOW_ALL;
-			}
-			else
-			{
-				i=GetWhiteListIndex(g_WhiteList,&g_WhiteListIndex,host,hostlen,false);
-				if(i!=-1) Permits=g_WhiteList[i].Permits;
-			}
-
-			ReleaseMutex(g_hQSharedListMutex);
-		}
-	}
-
-	return Permits;
-}
-
 #define NADIMAGESIZES 11
-
 #define NFILTERPATTERNS 2
 #define FILTERPATTERN_SIZE 0
 #define NFILTERLABELS 31
@@ -4961,7 +3813,88 @@ void CQToolbar::OnSiteChange()
 	
 	UpdateEmbedButtons(false,true);
 }
+void CQToolbar::AddToURLHistory(TCHAR* entry)
+{
+	UINT i;
+	HKEY hKeyQuero;
+	DWORD size;
+	TCHAR buffer[REGKEYLENGTH], * found;
+	HURLRegData data;
+	size_t len;
 
+	if (g_Options & OPTION_SaveAddressHistory)
+	{
+		CoFileTimeNow(&data.Timestamp);
+		data.reserved1 = 0;
+		data.reserved2 = 0;
+
+		StrCchLen(entry, MAXURLLENGTH, len);
+		if (len > 0 && len < REGKEYLENGTH) // Do not add if too long for registry
+		{
+			if (WaitForSingleObject(g_hQSharedMemoryMutex, QMUTEX_TIMEOUT) == WAIT_OBJECT_0)
+			{
+				if (WaitForSingleObject(g_hQSharedListMutex, QMUTEX_TIMEOUT) == WAIT_OBJECT_0)
+				{
+					SyncURLs(false);
+
+					for (i = 0; i < g_nURLs; i++) if (g_URLs[i]) if (!StrCmp(entry, g_URLs[i])) break;
+
+					hKeyQuero = OpenQueroKey(HKEY_CURRENT_USER, L"URL", true);
+
+					if (i == g_nURLs) // Not found
+					{
+						if (g_nURLs >= URLHISTORYSIZE)
+						{
+							g_nURLs--;
+							if (g_URLs[0]) SysFreeString(g_URLs[0]);
+							CopyMemory(g_URLs, g_URLs + 1, (g_nURLs) * sizeof(BSTR));
+
+							// Delete first history entry
+							if (hKeyQuero)
+							{
+								size = REGKEYLENGTH;
+								if (RegEnumValue(hKeyQuero, 0, buffer, &size, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+									RegDeleteValue(hKeyQuero, buffer);
+							}
+						}
+						g_URLs[g_nURLs] = SysAllocString(entry);
+						if (g_URLs[g_nURLs])
+						{
+							g_nURLs++;
+
+							if (hKeyQuero) RegSetValueEx(hKeyQuero, entry, 0, REG_BINARY, (LPBYTE)&data, sizeof(HURLRegData));
+						}
+					}
+					else if (g_nURLs > 1 && i != g_nURLs - 1) // Copy old history entry to top of list
+					{
+						if (hKeyQuero)
+						{
+							RegDeleteValue(hKeyQuero, entry);
+							RegSetValueEx(hKeyQuero, entry, 0, REG_BINARY, (LPBYTE)&data, sizeof(HURLRegData));
+						}
+
+						found = g_URLs[i];
+						CopyMemory(g_URLs + i, g_URLs + i + 1, (g_nURLs - i - 1) * sizeof(BSTR));
+						g_URLs[g_nURLs - 1] = found;
+					}
+					else // Update
+					{
+						if (hKeyQuero) RegSetValueEx(hKeyQuero, entry, 0, REG_BINARY, (LPBYTE)&data, sizeof(HURLRegData));
+					}
+
+					if (hKeyQuero) RegCloseKey(hKeyQuero);
+
+					// Advance logical time
+					if (g_QSharedMemory) g_LTimeURLs = ++(g_QSharedMemory->LTimeURLs);
+
+					ReleaseMutex(g_hQSharedListMutex);
+				}
+
+				ReleaseMutex(g_hQSharedMemoryMutex);
+			}
+		}
+	} // End OPTION_SaveAddressHistory
+}
 void CQToolbar::OnBeforeNavigate(IDispatch *pDisp,VARIANT *vUrl,VARIANT *vFlags, VARIANT *vTarget,VARIANT *vPostData,VARIANT *vHeaders,SHORT *Cancel,bool first,bool toplevel)
 {
 	BSTR newurl=vUrl->bstrVal;
@@ -5007,7 +3940,6 @@ void CQToolbar::OnBeforeNavigate(IDispatch *pDisp,VARIANT *vUrl,VARIANT *vFlags,
 		if(*Cancel==FALSE)
 		{
 			// Update whitelist
-			SyncWhiteList();
 
 			if(toplevel) // Handle top-level navigations only
 			{
@@ -5023,25 +3955,6 @@ void CQToolbar::OnBeforeNavigate(IDispatch *pDisp,VARIANT *vUrl,VARIANT *vFlags,
 				{
 					NavigationPending=true;
 
-					// Intercept Lucky Search
-					ImFeelingLucky=m_Profiles.IsLuckyURL(beforeURL,interceptedSearchTerms);
-					if(ImFeelingLucky)
-					{
-						if(m_ComboQuero.GetText(bstrQuero))
-						{
-							if(StrCmp(bstrQuero,interceptedSearchTerms))
-							{
-								if(g_Options2&OPTION2_ShowSearchTermsWhileSearching)
-								{
-									m_ComboQuero.SetText(interceptedSearchTerms,TYPE_SEARCH,NULL,false);
-									AddToHistory(interceptedSearchTerms,TYPE_SEARCH,FLAG_BROWSEBYNAME,GetEngineId(),CurrentProfileId);
-								}
-								else ImFeelingLucky=false;
-							}
-							SysFreeString(bstrQuero);
-						}
-					}
-
 					// Intercept last query
 					if(LastQueryURL)
 					{
@@ -5050,9 +3963,6 @@ void CQToolbar::OnBeforeNavigate(IDispatch *pDisp,VARIANT *vUrl,VARIANT *vFlags,
 
 					// Reset internal link state
 					if(StrCmpN(beforeURL,_T("res://"),6)) InternalLink=false;
-					
-					// Stop current animation
-					m_IconAnimation.Stop(ICON_ANIMATION_SEARCHING);
 
 					// Determine whether a search is performed
 					Searching=(LastQueryURL || ImFeelingLucky);
@@ -5086,9 +3996,6 @@ void CQToolbar::OnBeforeNavigate(IDispatch *pDisp,VARIANT *vUrl,VARIANT *vFlags,
 
 		// Free PostData
 		if(PostData) delete[] PostData;
-
-		// If first navigation in new window is cancelled, redirect to about blank
-		if(*Cancel==TRUE && currentURL[0]==0 && bRedirectBrowser==false) NavigateToAboutBlank();
 		
 	} // newurl valid end
 }
@@ -5116,70 +4023,12 @@ bool CQToolbar::InterceptSearch(TCHAR *pURL,TCHAR *pAsciiURL,TCHAR *pPostDataUni
 				SelectEngine(SearchEngineIndex);
 			}
 			// Add to history
-			AddToHistory(InterceptedSearchTerms,TYPE_SEARCH,0,SearchEngineId,CurrentProfileId);
+			//AddToHistory(InterceptedSearchTerms,TYPE_SEARCH,0,SearchEngineId,CurrentProfileId);
+			AddToURLHistory(InterceptedSearchTerms);
 		}
 	}
 
 	return result;
-}
-
-bool CQToolbar::IsStartPageURL(TCHAR *url)
-{
-	bool result;
-	HKEY hKey=NULL;
-	DWORD size;
-	TCHAR IEStartPage[MAXURLLENGTH];
-
-	result=false;
-
-	size=MAXURLLENGTH;
-
-	if(RegOpenKeyEx(HKEY_CURRENT_USER,L"Software\\Microsoft\\Internet Explorer\\Main",0,KEY_READ,&hKey)==ERROR_SUCCESS)
-	{
-		if(RegQueryValueEx(hKey,L"Start Page",0,NULL,(LPBYTE)&IEStartPage,&size)==ERROR_SUCCESS)
-		{
-			if(!StrCmpN(url,IEStartPage,MAXURLLENGTH)) result=true;
-		}
-		RegCloseKey(hKey);
-	}
-
-	return result;
-}
-
-int CQToolbar::URLToAscii(TCHAR *url)
-{
-	int status;
-	size_t url_len;
-
-	url_len=MAXURLLENGTH;
-	
-	return status;
-}
-
-int CQToolbar::URLToUnicode(TCHAR *url,int *HostStartIndex,int *HostEndIndex,int *DomainStartIndex)
-{
-	int status;
-	size_t url_len;
-
-	url_len=MAXURLLENGTH;
-	return status;
-}
-
-void CQToolbar::CopyCurrentCoreDomain(TCHAR *pCoreDomain)
-{
-	StringCchCopyN(pCoreDomain,MAXURLLENGTH,currentURL+DomainStartIndex,HostEndIndex-DomainStartIndex);
-}
-
-void CQToolbar::NavigateToAboutBlank()
-{
-	VARIANT vEmpty;
-
-	if(m_pBrowser)
-	{
-		VariantInit(&vEmpty);
-		m_pBrowser->Stop();
-		m_pBrowser->Navigate(CComBSTR(L"about:blank"),&vEmpty,&vEmpty,&vEmpty,&vEmpty);
-	}
 }
 
 void CQToolbar::NavigateUp(UINT newWinTab)
@@ -5505,8 +4354,6 @@ void CQToolbar::FindOnPage(BYTE initiatedBy,BYTE findOptions)
 		{
 			if(pFindText[0])
 			{
-				StartSearchAnimation();
-
 				// Blur focus if user clicked on search icon
 				if(initiatedBy==FIND_INITIATED_BY_SearchIcon)
 				{
@@ -5590,8 +4437,6 @@ void CQToolbar::FindOnPage(BYTE initiatedBy,BYTE findOptions)
 					}
 					else SetPhraseNotFound(false);
 				}
-
-				StopSearchAnimation();
 			}
 
 			SysFreeString(bstrQuery);
@@ -6053,9 +4898,6 @@ void CQToolbar::InitWords(TCHAR Words[MAXWORDS][MAXWORDLENGTH],UINT *nWords,BYTE
 	if((options&INITWORDS_SearchBox) && currentType==TYPE_SEARCH && !m_ComboQuero.bIsEmptySearch)
 	{
 		pPhrase=m_ComboQuero.GetFindText(bstrQuery);
-		if(bstrQuery)
-		{
-		}
 	}
 
 	// Take the last searched keywords from the last history entry
@@ -6093,43 +4935,7 @@ void CQToolbar::OnProgressChange(int progress)
 
 void CQToolbar::OnDocumentComplete()
 {
-	IHTMLDocument2* pHtmlDocument;
-
-	if(Highlight && nHighlightedWords)
-	{
-		KillTimer(ID_HIGHLIGHT_TIMER);
-		if(GetHtmlDocument2(&pHtmlDocument))
-		{
-			pHtmlDocument->Release();
-		}
-	}
 	Searching=false;
-	StopSearchAnimation();
-
-	// Workaround: occasionally css zoom is not applied if the link is opened in a new window/tab
-	if(ZoomFactor!=100 && UseOpticalZoom()==false) ZoomPage(ZoomFactor,ZOOMPAGE_PUT_ZOOM);
-	
-	if(ContentBlocked) PutStatusText(GetString(IDS_CONTENTBLOCKED));
-
-	// Download favicon if one is specified in the html document and is different from the default location (/favicon.ico)
-	
-}
-
-void CQToolbar::OnDownloadBegin()
-{
-	BYTE Animation;
-
-	Animation=ICON_ANIMATION_NONE;
-
-	if(Searching) Animation=ICON_ANIMATION_SEARCHING;
-	if((g_Options2&OPTION2_PageLoadingAnimation) && g_IE_MajorVersion>=7) Animation|=ICON_ANIMATION_LOADING;
-
-	if(Animation) m_IconAnimation.Start(Animation);
-}
-
-void CQToolbar::OnDownloadComplete()
-{
-	m_IconAnimation.Stop(ICON_ANIMATION_ALL);
 }
 
 LRESULT CQToolbar::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)

@@ -800,19 +800,9 @@ public:
 		MESSAGE_HANDLER(WM_QUERO_SHOWRESIZEWINDOW, OnShowResizeWindow)
 		MESSAGE_HANDLER(WM_QUERO_TOOLBAR_COMMAND, OnQueroToolbarCommand)
 
-		//CHAIN_MSG_MAP_MEMBER(m_ComboQuero)
-		//CHAIN_MSG_MAP_MEMBER(m_ComboEngine)
-		//CHAIN_MSG_MAP_MEMBER(m_NavBar)
-		//CHAIN_MSG_MAP_MEMBER(m_LogoToolbar)
-		//CHAIN_MSG_MAP_MEMBER(m_ButtonBar)
 	END_MSG_MAP()
 
 	// Message handlers
-
-	//LRESULT MessageHandler(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	//LRESULT CommandHandler(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-	//LRESULT NotifyHandler(int idCtrl, LPNMHDR pnmh, BOOL& bHandled);
-	//LRESULT OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
@@ -850,7 +840,6 @@ public:
 	// Quero Settings
 	static HKEY OpenQueroKey(HKEY hKeyRoot,TCHAR *pSubKey,bool bCreateKey);
 	void SyncSettings();
-	void LoadTheme(TCHAR *pQueroThemeFile);
 	bool SaveSettingsValue(UINT ValueId,DWORD dwValue);
 	bool SaveSettingsValueEx(UINT ValueId,DWORD dwType,LPBYTE pData,DWORD cbSize);
 	bool DeleteSettingsValue(UINT ValueId);
@@ -924,11 +913,6 @@ public:
 	inline HBRUSH GetDefaultBackground() {return hDefaultBackground;}
 	inline HBRUSH GetHighlightBrush() {return hHighlightBrush;}
 
-	// Icon Animation
-	inline bool IsLoadingAnimation() {return currentType==TYPE_ADDRESS && m_ComboQuero.bCurrentURLDisplayed && (m_IconAnimation.GetActiveAnimations()&ICON_ANIMATION_LOADING)!=0;}
-	inline bool IsSearching() {return Searching;}
-	inline void StartSearchAnimation() { m_IconAnimation.Start(ICON_ANIMATION_SEARCHING); }
-	inline void StopSearchAnimation(bool wait=false) { m_IconAnimation.Stop(ICON_ANIMATION_SEARCHING,wait); }
 
 	// History
 	inline HistoryEntry* GetHistory() {return History;};
@@ -940,24 +924,9 @@ public:
 	void SyncURLs(bool Synchronize=true);
 	void FreeHistory(HistoryEntry *History,UINT* HistoryIndex);
 	void FreeURLs();
-	void AddToHistory(TCHAR* entry,BYTE type,BYTE flags,int engineid,int profileid);
 	void AddToURLHistory(TCHAR* entry);
 	void ClearHistory();
-	void DeleteFromHistory(TCHAR *entry);
-	void DeleteFromURLHistory(TCHAR *entry);
 	HistoryEntry* GetLastHistoryEntry();
-
-	// WhiteList
-	void SyncWhiteList(bool Synchronize=true);
-	void FreeWhiteList(WhiteListEntry *pWhiteList,UINT *pWhiteListIndex);
-	int AddToWhiteList(TCHAR* entry,USHORT permits,bool or_permits);
-	int DeleteFromWhiteList(TCHAR* entry);
-	void ResetWhiteList();
-	int GetWhiteListIndex(bool Synchronize=true);
-	int GetWhiteListIndex(WhiteListEntry *pWhiteList,UINT *pWhiteListIndex,TCHAR *host,int hostlen,bool Synchronize=true);
-	USHORT GetWhiteListPermits(TCHAR *url,TCHAR *host,int hostlen);
-	void TemporarilyUnblock(bool bUnblock,bool bRemoveFromAllInstances,TCHAR* pattern,bool bSynchronize);
-	void TemporarilyUnblockCurrentDomain(bool bUnblock,bool bRemoveFromAllInstances,bool bSynchronize);
 
 	// Search profiles
 	void SelectEngine(int EngineIndex,bool bForceUpdate=false,bool bSetCurSel=true,bool bRedraw=true);
@@ -971,7 +940,6 @@ public:
 	inline UINT GetEngineCount() {return nengines;}
 	inline bool GetChooseProfile() { return chooseProfile;}
 	inline bool SetChooseProfile(bool c) { return chooseProfile=c;}
-	void SyncSearchProfiles();
 
 	// Navigation related
 	void Quero(TCHAR* pQuery=NULL,BYTE type=TYPE_UNKNOWN,BYTE options=0,UINT newWinTab=OPEN_UNDEFINED,int differentEngineId=-1,int differentProfileId=-1); // Search or navigate browser
@@ -982,30 +950,15 @@ public:
 	inline bool IsNavigationPending() {return NavigationPending;}
 	void OnSiteChange();
 	void OnDocumentComplete();
-	void OnDownloadBegin();
-	void OnDownloadComplete();
 	void OnProgressChange(int progress);
-	void NavigateToAboutBlank();
 	bool InterceptSearch(TCHAR *pURL,TCHAR *pAsciiURL,TCHAR *pPostDataUnicode);
 	void FreeLastQueryURL();
 	void NavigateUp(UINT newWinTab);
 	bool NavigateUp_Available();
 
-	// Pop-up Blocker
-	void OnNewWindow3(IDispatch **ppDisp,VARIANT_BOOL *pCancel,DWORD dwFlags,BSTR bstrUrlContext,BSTR bstrUrl);
-	void PopupBlocked();
-	void GetDiffFileTime(FILETIME *time1,FILETIME *time2,FILETIME *diff);
-
 	// URL related
-	bool CheckIDN(TCHAR *url_decoded,int hoststartidx,int hostendidx,int domainstartidx,int idna_status);
-	bool HasMissingGlyphs(HDC hDC,TCHAR *pHost,int len);
 	void MakeAbsoluteURL(TCHAR *AbsoluteURL,TCHAR *URL,TCHAR *BaseURL);
 	BYTE SetCurrentURL(TCHAR *url);
-	int URLToAscii(TCHAR *url);
-	int URLToUnicode(TCHAR *url,int *HostStartIndex,int *HostEndIndex,int *DomainStartIndex);
-	bool IsStartPageURL(TCHAR *url);
-	void CopyCurrentCoreDomain(TCHAR *pCoreDomain);
-	void AppendCurrentAddress(TCHAR *pQueryWithAddress,TCHAR *pOriginalQuery,UINT iRequiresAddress);
 
 	// Document Title related
 	void OnTitleChange(BSTR bstrTitle);

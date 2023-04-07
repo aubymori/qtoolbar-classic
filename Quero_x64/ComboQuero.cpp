@@ -343,9 +343,6 @@ STDMETHODIMP CComboQuero::TranslateAcceleratorIO(LPMSG lpMsg)
 			{
 				if(m_Edit.GetText(bstrQuery))
 				{
-					// Delete entry from Quero history
-					m_pToolbar->DeleteFromHistory(bstrQuery);
-					m_pToolbar->DeleteFromURLHistory(bstrQuery);
 					SysFreeString(bstrQuery);
 				}
 				SetText(L"",TYPE_SEARCH,NULL,false);

@@ -801,18 +801,6 @@ STDMETHODIMP CQueroBand::Invoke(DISPID dispidMember, REFIID riid, LCID lcid, WOR
 		}
 		break;
 
-	case DISPID_DOWNLOADBEGIN:
-		// No parameters
-		// Fires when a navigation operation is beginning.
-		m_Toolbar.OnDownloadBegin();
-		break;
-	
-	case DISPID_DOWNLOADCOMPLETE:
-		// No parameters
-		// Fires when a navigation operation finishes, is halted, or fails.
-		m_Toolbar.OnDownloadComplete();
-		break;
-		
 	case DISPID_TITLECHANGE:
 		//
 		// The parameters for this DISPID:
@@ -846,22 +834,6 @@ STDMETHODIMP CQueroBand::Invoke(DISPID dispidMember, REFIID riid, LCID lcid, WOR
 		m_bBlockNewWindow = TRUE;	// Reset
 		break;
 */
-
-	case 273 /* DISPID_NEWWINDOW3 */:
-		// [0]: bstrUrl
-		// [1]: bstrUrlContext
-		// [2]: NWMF dwFlags
-		// [3]: VARIANT_BOOL Cancel
-		// [4]: IDispatch **ppDisp
-		
-		if(g_BlockPopUps&POPUPBLOCKER_Enable)
-			m_Toolbar.OnNewWindow3(
-				pDispParams->rgvarg[4].ppdispVal,
-				pDispParams->rgvarg[3].pboolVal,
-				pDispParams->rgvarg[2].intVal,
-				pDispParams->rgvarg[1].bstrVal,
-				pDispParams->rgvarg[0].bstrVal);
-		break;
 
 /*
 		//
@@ -1409,7 +1381,6 @@ HRESULT STDMETHODCALLTYPE DocHostUIHandler_ShowContextMenu(IDocHostUIHandler __R
 														if(newWinTab==OPEN_SameWindow)
 														{
 															pToolbar->GetComboQuero()->SetText(selection,TYPE_SEARCH,NULL,false);
-															pToolbar->SelectEngine(nCmd-ID_CTXMENU_QUERO);
 														}
 
 														pToolbar->Quero(selection,TYPE_SEARCH,QUERO_REDIRECT,newWinTab,pToolbar->m_Profiles.CurrentProfile.Engines[nCmd-ID_CTXMENU_QUERO].id);
